@@ -1,11 +1,13 @@
-from src.constants import Alterations, Quality, Type
+from dataclasses import dataclass
+from src.constants import Quality, SeventhType
 
+@dataclass
 class Chord:
-    def __init__(self, root: int, alts: Alterations, quality: Quality, chord_type: Type):
+    def __init__(self, root: int, quality: Quality, seventhType: SeventhType, alterations: str):
         self.root = root
-        self.alts = alts
         self.quality = quality
-        self.type = chord_type
+        self.seventhType = seventhType
+        self.alterations = alterations
         self._validate_root()
         self._validate_chord()
 
@@ -15,11 +17,13 @@ class Chord:
 
     def _validate_chord(self):
         exclusions = {
-            (Alterations.AUGMENTED, Quality.MINOR),
-            (Alterations.DIMINISHED, Quality.MAJOR),
+            (Quality.DIMINISHED, SeventhType.MAJOR),
+            (Quality.AUGMENTED, SeventhType.DIMINISHED),
+            (Quality.SUS2, SeventhType.DIMINISHED),
+            (Quality.SUS4, SeventhType.DIMINISHED),
         }
-        if (self.quality, self.type) in exclusions:
-            raise ValueError(f"Incompatible combination: {self.quality.name} and {self.type.name}")
+        if (self.quality, self.seventhType) in exclusions:
+            raise ValueError(f"Incompatible combination: {self.quality.name} and {self.seventhType.name}")
         
 
     
