@@ -2,7 +2,9 @@ import re
 from pathlib import Path
 import pandas as pd
 from timeit import default_timer
+import pickle
 
+from src.objects.ChordProgression import ChordProgression
 from src.objects.Chord import Chord
 from src.constants import CHORD_REGEX, CHORD_REGEX2, CHORD_REGEX3, CHORD_REGEX4, NOTE_MAP, QUALITY_ENUM_MAP, SECTION_REGEX, Quality, SeventhType
 
@@ -37,7 +39,7 @@ def parse_csv(path:Path, decade:int=1980) -> list[str]:
 
 
 
-def parse_progressions(slash_progression_strings: list[str]) -> list[list[Chord]]:
+def parse_progressions_old(slash_progression_strings: list[str]) -> list[list[Chord]]:
 
     chord_progressions: list[list[Chord]] = []
     for slash_progression_string in slash_progression_strings:
@@ -94,13 +96,13 @@ def parse_progressions(slash_progression_strings: list[str]) -> list[list[Chord]
 
 
 # Combined regex and match degrouping improved performance by 25%
-def parse_progressions2(slash_progression_strings: list[str]) -> list[list[Chord]]:
+def parse_progressions(slash_progression_strings: list[str]) -> list[ChordProgression]:
 
-    chord_progressions: list[list[Chord]] = []
+    chord_progressions: list[ChordProgression] = []
     for slash_progression_string in slash_progression_strings:
 
         slash_chord_strings: list[str] = slash_progression_string.split(' ')
-        chord_progression: list[Chord] = []
+        chords: list[Chord] = []
         for slash_chord_string in slash_chord_strings:
 
             slash_chord = slash_chord_string.split("/")
@@ -130,31 +132,43 @@ def parse_progressions2(slash_progression_strings: list[str]) -> list[list[Chord
             remainder_string: str = remainder_str
 
             chord = Chord(root_note, quality, extension, remainder_string, bass_note)
-            chord_progression.append(chord)
-
-        chord_progressions.append(chord_progression)
+            chords.append(chord)
+        chord_progressions.append(ChordProgression(chords))
 
     return chord_progressions
 
 
 
-def write_progressions(chord_progressions: list[list[Chord]], filename: str):
-    with open(filename, 'w') as file:  # 'w' to overwrite each run
+def log_progressions(chord_progressions: list[ChordProgression], filepath: Path):
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    with open(filepath, 'w') as file:
         for progression in chord_progressions:
             string_chords: list[str] = []
-            for chord in progression:
+            for chord in progression.chords:
                 chord_tuple = f"({chord.root},{chord.quality.name},{chord.seventhType.name},'{chord.remainders}',{chord.bass})"
                 string_chords.append(chord_tuple)
             file.write(" -> ".join(string_chords) + '\n')
 
 
+def write_progressions(chord_progressions: list[ChordProgression], filepath: Path):
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    with open(filepath, 'wb') as file:
+        pickle.dump(chord_progressions, file)
 
-start = default_timer()
-chord_progression_strings = parse_csv(Path("data/chordonomicon_v2.csv"))
-end = default_timer()
-print(end - start)
+def load_progressions(filepath: Path) -> list[ChordProgression]:
+    with open(filepath, 'rb') as file:
+        return pickle.load(file)
 
-start = default_timer()
-chord_progressions = parse_progressions2(chord_progression_strings)
-end = default_timer()
-print(end - start)
+def main():
+    start = default_timer()
+    chord_progression_strings = parse_csv(Path("data/chordonomicon_v2.csv"))
+    end = default_timer()
+    print(f"Loading the dataset takes {end - start} seconds")
+
+    start = default_timer()
+    parse_progressions(chord_progression_strings)
+    end = default_timer()
+    print(f"Parsing the dataset takes {end - start} seconds")
+
+if __name__ == "__main__":
+    main()

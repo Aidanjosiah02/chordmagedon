@@ -36,5 +36,9 @@ QUALITY_ENUM_MAP: dict[str|None, Quality] = {
     'dim': Quality.DIMINISHED
 }
 
+DATASET = "data/chordonomicon_v2.csv"
+LOG = "logs/chords-v1.log"
+PICKLE = "processed/chord_progressions.pk1"
+
 # Chord types extracted during testing:
 # {'', 'minadd13', '13', 'dim9', '7sus4', 'maj13', '13b9', '7b9', 'dim', 'add13', 'minmaj9', 'majs911s', 'min9', '13b', 'maj9', 'minadd11', 'maj1311s', 'dim13b9', 'maj11', 'sus4', 'maj7sus2', 'majs9', 'maj911s', 'dimb9', '9', 'minmaj7', 'add11', 'maj7', 'dim7', 'augmaj9', 'aug', 'maj7sus4', '11b9', 'min11', 'min13', '11', 'minadd9', 'min7', 'add9', '7sus2', '11s', 'minmaj11', 'min', 'dimb7', 'augmaj7', 'sus2', 'no3d', '7'}

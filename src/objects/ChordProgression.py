@@ -1,12 +1,18 @@
+from dataclasses import dataclass
 import random
+from src.objects.Chord import Chord
 
-from objects.Chord import Chord
-
+@dataclass(slots=True)
 class ChordProgression:
-    def __init__(self, input_chords: list[Chord], root:int=0):
-        self.chords = input_chords
-        self.root = root
-        self.fitness = 0.0
+    chords: list[Chord]
+    root: int = 0
+    fitness: float = 0.0
+
+    # def __post_init__(self):
+    #     self._find_key()
+
+    # def _find_key(self):
+    #     pass
 
     def mutate(self, mutation_power:float=0.1):
         for index in range(len(self.chords)):
