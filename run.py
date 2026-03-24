@@ -1,6 +1,7 @@
 from pathlib import Path
 from src.constants import DATASET, LOG, PICKLE
-from src.utils.parse_dataset import log_progressions, parse_csv, parse_progressions, write_progressions
+from src.utils.io_handler import log_progressions, parse_csv, write_progressions
+from src.utils.parser import parse_progressions
 
 def main():
     print(f"Loading {DATASET}...")

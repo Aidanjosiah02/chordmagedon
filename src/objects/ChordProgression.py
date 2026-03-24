@@ -24,6 +24,3 @@ class ChordProgression:
 
     def to_midi():
         pass
-
-    def fitness():
-        pass

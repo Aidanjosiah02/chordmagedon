@@ -16,10 +16,7 @@ class SeventhType(Enum):
     MAJOR = 2
     DIMINISHED = 3
 
-CHORD_REGEX = compile(r'^(?P<root>[A-G](?:s(?!us)|b)?)(?P<remainder>.*)$')
-CHORD_REGEX2 = compile(r'^(?P<quality>min|no3d|aug|dim)?(?P<remainder>.*)$')
-CHORD_REGEX3 = compile(r'^(?P<extension>(?:maj)?[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?(?P<remainder>.*)$')
-CHORD_REGEX4 = compile(r'^(?P<root>[A-G](?:s(?!us)|b)?)(?P<quality>min|no3d|aug|dim)?(?P<extension>(?:maj)?[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?(?P<remainder>.*)$')
+CHORD_REGEX = compile(r'^(?P<root>[A-G](?:s(?!us)|b)?)(?P<quality>min|no3d|aug|dim)?(?P<extension>(?:maj)?[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?(?P<remainder>.*)$')
 
 SECTION_REGEX = r'(<[^>]+>)'
 EXTENSION_REGEX = r'\d'
