@@ -14,13 +14,16 @@ class ChordProgression:
     # def _find_key(self):
     #     pass
 
-    def mutate(self, mutation_power:float=0.1):
+    def mutate(self, mutation_power: float = 0.1):
         for index in range(len(self.chords)):
             if random.random() < mutation_power:
                 pass
-    
+
     def get_fitness():
         pass
 
     def to_midi():
+        pass
+
+    def fitness():
         pass
