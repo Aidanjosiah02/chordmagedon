@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from src.constants import Quality, SeventhType
 
+
 @dataclass(frozen=True, slots=True)
 class Chord:
     _EXCLUSIONS = {
@@ -14,7 +15,6 @@ class Chord:
     quality: Quality
     seventhType: SeventhType
     remainders: str
-    bass: int
 
     def __post_init__(self):
         self._validate_root()
@@ -26,4 +26,5 @@ class Chord:
 
     def _validate_chord(self):
         if (self.quality, self.seventhType) in self._EXCLUSIONS:
-            raise ValueError(f"Incompatible combination: {self.quality.name} and {self.seventhType.name}")
+            raise ValueError(f"Incompatible combination: {
+                             self.quality.name} and {self.seventhType.name}")

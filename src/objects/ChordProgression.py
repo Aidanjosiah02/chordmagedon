@@ -19,7 +19,7 @@ class ChordProgression:
             if random.random() < mutation_power:
                 pass
 
-    def get_fitness():
+    def evaluate_fitness():
         pass
 
     def to_midi():
