@@ -2,7 +2,7 @@ from src.utils.io_handler import load_arrangements
 from src.constants import PICKLE
 
 GENERATIONS = 1000
-POPULATION_SIZE = 10
+POPULATION_SIZE = 95000
 
 
 def crossover():
@@ -13,10 +13,15 @@ def mutate():
     pass
 
 
+def tournament(participants):
+    pass
+
+
 population = load_arrangements(PICKLE)
 
 for i in range(GENERATIONS):
-    # We need to call the eval fitness function to calculate the fitness functions for all the members
+    # We need to call the eval fitness function to calculate
+    # the fitness functions for all the members
     for individual in population:
         individual.evaluate_fitness()
 
