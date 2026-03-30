@@ -26,5 +26,7 @@ class Chord:
 
     def _validate_chord(self):
         if (self.quality, self.seventhType) in self._EXCLUSIONS:
-            raise ValueError(f"Incompatible combination: {
-                             self.quality.name} and {self.seventhType.name}")
+            raise ValueError(f"Incompatible combination: {self.quality.name} and {self.seventhType.name}")
+        
+    def to_tuple(self) -> tuple[int, int, int]:
+        return (self.root, self.quality.value, self.seventhType.value)

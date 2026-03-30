@@ -18,3 +18,6 @@ class Arrangement:
     def evaluate_fitness(self):
         self.fitness = self.progression.evaluate_fitness() + self.bassline.evaluate_fitness(self.progression)
         return self.fitness
+    
+    def get_progression(self) -> ChordProgression:
+        return self.progression
