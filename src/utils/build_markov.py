@@ -22,5 +22,3 @@ def generate_markov_chord_occurence(arrangements: list[Arrangement]):
                 else:
                     chain[key][value] += 1
     return chain
-
-print(generate_markov_chord_occurence(arrangements))
