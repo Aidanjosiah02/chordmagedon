@@ -24,3 +24,6 @@ class ChordProgression:
 
     def to_midi():
         pass
+
+    def to_tuples(self) -> list[tuple[int, int, int]]:
+        return [chord.to_tuple() for chord in self.chords]
