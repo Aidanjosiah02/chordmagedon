@@ -1,7 +1,7 @@
 import re
 from src.objects.ChordProgression import ChordProgression
 from src.objects.Bassline import BassLine
-from src.objects.Arrangemment import Arrangement
+from src.objects.Arrangement import Arrangement
 from src.objects.Chord import Chord
 from src.constants import CHORD_REGEX, NOTE_MAP, QUALITY_ENUM_MAP, Quality, SeventhType
 

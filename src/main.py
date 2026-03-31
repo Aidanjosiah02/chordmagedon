@@ -1,10 +1,9 @@
-from src.utils.io_handler import load_arrangements
-from src.constants import PICKLE
-import numpy
-import random
+from pathlib import Path
 
-GENERATIONS = 1000
-POPULATION_SIZE = 95000
+from src.utils.io_handler import load_pickle
+from src.constants import ARRANGEMENT_PICKLE, GENERATIONS
+import numpy as np
+import random
 
 
 def crossover():
@@ -20,7 +19,7 @@ def tournament(participants):
     return np.random.choice(participants, size=2, replace=False, p=fitnesses)
 
 
-population = load_arrangements(PICKLE)
+population = load_pickle(Path(ARRANGEMENT_PICKLE))
 
 for i in range(GENERATIONS):
     new_population = []

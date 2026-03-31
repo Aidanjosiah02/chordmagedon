@@ -16,12 +16,28 @@ class SeventhType(Enum):
     MAJOR = 2
     DIMINISHED = 3
 
+EXCLUSIONS = {
+    (Quality.MAJOR, SeventhType.DIMINISHED),
+    (Quality.MINOR, SeventhType.DIMINISHED),
+    (Quality.AUGMENTED, SeventhType.DIMINISHED),
+    (Quality.SUS2, SeventhType.DIMINISHED),
+    (Quality.SUS4, SeventhType.DIMINISHED),
+}
+
+NOTE_MAP = {'C': 0, 'Cs': 1, 'Db': 1, 'D': 2, 'Ds': 3, 'Eb': 3, 'E': 4, 'F': 5, 'Fs': 6, 'Gb': 6, 'G': 7, 'Gs': 8, 'Ab': 8, 'A': 9, 'As': 10, 'Bb': 10, 'B': 11}
+
+VOCAB_SIZE = len([
+    (root, quality, seventhType) 
+    for root in set(NOTE_MAP.values()) 
+    for quality in Quality 
+    for seventhType in SeventhType 
+    if (quality, seventhType) not in EXCLUSIONS
+])
+
 CHORD_REGEX = compile(r'^(?P<root>[A-G](?:s(?!us)|b)?)(?P<quality>min|no3d|aug|dim)?(?P<extension>(?:maj)?[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?(?P<remainder>.*)$')
 
 SECTION_REGEX = r'(<[^>]+>)'
 EXTENSION_REGEX = r'\d'
-
-NOTE_MAP = {'C': 0, 'Cs': 1, 'Db': 1, 'D': 2, 'Ds': 3, 'Eb': 3, 'E': 4, 'F': 5, 'Fs': 6, 'Gb': 6, 'G': 7, 'Gs': 8, 'Ab': 8, 'A': 9, 'As': 10, 'Bb': 10, 'B': 11}
 
 QUALITY_ENUM_MAP: dict[str|None, Quality] = {
     None: Quality.MAJOR,
@@ -34,8 +50,19 @@ QUALITY_ENUM_MAP: dict[str|None, Quality] = {
 }
 
 DATASET = "data/chordonomicon_v2.csv"
-LOG = "logs/chords-v1.log"
-PICKLE = "processed/chord_progressions.pk1"
+ARRANGEMENT_LOG = "logs/arrangement-v1.log"
+CHORD_PROGRESSION_LOG = "logs/chord_progressions-v1.log"
+MARKOV_CHORD_LOG = "logs/markov_chords-v1.log"
+
+ARRANGEMENT_PICKLE = "processed/arrangement.pk1"
+CHORD_PROGRESSION_PICKLE = "processed/chord_progressions.pk1"
+MARKOV_CHORD_PICKLE = "processed/markov_chords.pk1"
+MARKOV_BASS_PICKLE = "processed/markov_bass.pk1"
+
+GENERATIONS = 1000
+POPULATION_SIZE = 95000
+
+
 
 # Chord types extracted during testing:
 # {'', 'minadd13', '13', 'dim9', '7sus4', 'maj13', '13b9', '7b9', 'dim', 'add13', 'minmaj9', 'majs911s', 'min9', '13b', 'maj9', 'minadd11', 'maj1311s', 'dim13b9', 'maj11', 'sus4', 'maj7sus2', 'majs9', 'maj911s', 'dimb9', '9', 'minmaj7', 'add11', 'maj7', 'dim7', 'augmaj9', 'aug', 'maj7sus4', '11b9', 'min11', 'min13', '11', 'minadd9', 'min7', 'add9', '7sus2', '11s', 'minmaj11', 'min', 'dimb7', 'augmaj7', 'sus2', 'no3d', '7'}

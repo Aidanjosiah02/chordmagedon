@@ -2,8 +2,9 @@ import re
 from pathlib import Path
 import pandas as pd
 import pickle
-from src.objects.Arrangemment import Arrangement
+from src.objects.Arrangement import Arrangement
 from src.constants import SECTION_REGEX
+from src.types import Chain
 
 
 def split_sections(regex: str, progressions: list[str]) -> list[str]:
@@ -42,11 +43,22 @@ def log_arrangements(arrangements: list[Arrangement], filepath: Path):
             file.write(f"BASSLINE: {bassline_str}\n")
             file.write("\n")
 
-def write_arrangements(arrangements: list[Arrangement], filepath: Path):
+def log_markov(markov: Chain, filepath: Path):
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    with open(filepath, 'w') as file:
+        for key in markov:
+            sub_dict = markov[key]
+            buffer = [f"{key} -> {{\n"]
+            for sub_key in sub_dict:
+                buffer.append(f"\t{sub_key}: {sub_dict[sub_key]}\n")
+            buffer.append("},\n\n")
+            file.write("".join(buffer))
+
+def write_pickle(data: object, filepath: Path):
     filepath.parent.mkdir(parents=True, exist_ok=True)
     with open(filepath, 'wb') as file:
-        pickle.dump(arrangements, file)
+        pickle.dump(data, file)
 
-def load_arrangements(filepath: Path) -> list[Arrangement]:
+def load_pickle(filepath: Path) -> object:
     with open(filepath, 'rb') as file:
         return pickle.load(file)

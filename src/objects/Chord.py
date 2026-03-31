@@ -1,16 +1,8 @@
 from dataclasses import dataclass
-from src.constants import Quality, SeventhType
-
+from src.constants import EXCLUSIONS, Quality, SeventhType
 
 @dataclass(frozen=True, slots=True)
 class Chord:
-    _EXCLUSIONS = {
-        (Quality.MAJOR, SeventhType.DIMINISHED),
-        (Quality.MINOR, SeventhType.DIMINISHED),
-        (Quality.AUGMENTED, SeventhType.DIMINISHED),
-        (Quality.SUS2, SeventhType.DIMINISHED),
-        (Quality.SUS4, SeventhType.DIMINISHED),
-    }
     root: int
     quality: Quality
     seventhType: SeventhType
@@ -25,7 +17,7 @@ class Chord:
             raise ValueError(f"Root must be 0-11. Got {self.root}")
 
     def _validate_chord(self):
-        if (self.quality, self.seventhType) in self._EXCLUSIONS:
+        if (self.quality, self.seventhType) in EXCLUSIONS:
             raise ValueError(f"Incompatible combination: {self.quality.name} and {self.seventhType.name}")
         
     def to_tuple(self) -> tuple[int, int, int]:
