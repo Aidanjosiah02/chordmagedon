@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import Path
 from re import compile
 
 class Quality(Enum):
@@ -15,6 +16,12 @@ class SeventhType(Enum):
     DOMINANT = 1
     MAJOR = 2
     DIMINISHED = 3
+
+class Part(Enum):
+    CHORDS = 0
+    BASS = 1
+    MELODY = 2
+    DRUMS = 3
 
 EXCLUSIONS = {
     (Quality.MAJOR, SeventhType.DIMINISHED),
@@ -34,8 +41,6 @@ VOCAB_SIZE = len([
     if (quality, seventhType) not in EXCLUSIONS
 ])
 
-CHORD_TRANSITION_INFLUENCE = 0.5
-
 CHORD_REGEX = compile(r'^(?P<root>[A-G](?:s(?!us)|b)?)(?P<quality>min|no3d|aug|dim)?(?P<extension>(?:maj)?[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?(?P<remainder>.*)$')
 
 SECTION_REGEX = r'(<[^>]+>)'
@@ -51,17 +56,18 @@ QUALITY_ENUM_MAP: dict[str|None, Quality] = {
     'dim': Quality.DIMINISHED
 }
 
-DATASET = "data/chordonomicon_v2.csv"
-ARRANGEMENT_LOG = "logs/arrangement-v1.log"
-CHORD_PROGRESSION_LOG = "logs/chord_progressions-v1.log"
-FIRST_MARKOV_CHORD_LOG = "logs/first_markov_chords-v1.log"
-SECOND_MARKOV_CHORD_LOG = "logs/second_markov_chords-v1.log"
+DATA_DIR = Path("data")
+LOG_DIR = Path("logs")
+PROCESSED_DIR = Path("processed")
 
-ARRANGEMENT_PICKLE = "processed/arrangement.pk1"
-CHORD_PROGRESSION_PICKLE = "processed/chord_progressions.pk1"
-FIRST_MARKOV_CHORD_PICKLE = "processed/first_markov_chords.pk1"
-SECOND_MARKOV_CHORD_PICKLE = "processed/second_markov_chords.pk1"
-MARKOV_BASS_PICKLE = "processed/markov_bass.pk1"
+DATASET = DATA_DIR / "chordonomicon_v2.csv"
+
+ARRANGEMENT_LOG = "arrangements.log"
+ARRANGEMENT_PICKLE = "arrangements.pkl"
+MARKOV_LOG_SUFFIX = "markov_chords.log"
+MARKOV_PICKLE_SUFFIX = "markov_chords.pkl"
+
+CHORD_TRANSITION_INFLUENCE = 0.5
 
 GENERATIONS = 1000
 POPULATION_SIZE = 95000
