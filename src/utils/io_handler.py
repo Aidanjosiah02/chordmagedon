@@ -27,10 +27,9 @@ def parse_csv(path: Path, decade: int = 1980) -> list[str]:
             ].tolist()
             chunk_progressions = split_sections(SECTION_REGEX, chunk_progressions)
             all_progressions.extend(chunk_progressions)
-
     return all_progressions
 
-def log_arrangements(arrangements: list[Arrangement], filepath: Path):
+def log_arrangements(arrangements: list[Arrangement], filepath: Path) -> None:
     filepath.parent.mkdir(parents=True, exist_ok=True)
     with open(filepath, 'w') as file:
         for arr in arrangements:
@@ -43,7 +42,7 @@ def log_arrangements(arrangements: list[Arrangement], filepath: Path):
             file.write(f"BASSLINE: {bassline_str}\n")
             file.write("\n")
 
-def log_markov(markov: Chain, filepath: Path):
+def log_markov(markov: Chain, filepath: Path) -> None:
     filepath.parent.mkdir(parents=True, exist_ok=True)
     with open(filepath, 'w') as file:
         for key in markov:
@@ -54,7 +53,7 @@ def log_markov(markov: Chain, filepath: Path):
             buffer.append("},\n\n")
             file.write("".join(buffer))
 
-def write_pickle(data: object, filepath: Path):
+def write_pickle(data: object, filepath: Path) -> None:
     filepath.parent.mkdir(parents=True, exist_ok=True)
     with open(filepath, 'wb') as file:
         pickle.dump(data, file)
@@ -62,3 +61,4 @@ def write_pickle(data: object, filepath: Path):
 def load_pickle(filepath: Path) -> object:
     with open(filepath, 'rb') as file:
         return pickle.load(file)
+

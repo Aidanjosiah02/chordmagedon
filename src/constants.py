@@ -34,6 +34,8 @@ VOCAB_SIZE = len([
     if (quality, seventhType) not in EXCLUSIONS
 ])
 
+CHORD_TRANSITION_INFLUENCE = 0.5
+
 CHORD_REGEX = compile(r'^(?P<root>[A-G](?:s(?!us)|b)?)(?P<quality>min|no3d|aug|dim)?(?P<extension>(?:maj)?[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?(?P<remainder>.*)$')
 
 SECTION_REGEX = r'(<[^>]+>)'
@@ -52,11 +54,13 @@ QUALITY_ENUM_MAP: dict[str|None, Quality] = {
 DATASET = "data/chordonomicon_v2.csv"
 ARRANGEMENT_LOG = "logs/arrangement-v1.log"
 CHORD_PROGRESSION_LOG = "logs/chord_progressions-v1.log"
-MARKOV_CHORD_LOG = "logs/markov_chords-v1.log"
+FIRST_MARKOV_CHORD_LOG = "logs/first_markov_chords-v1.log"
+SECOND_MARKOV_CHORD_LOG = "logs/second_markov_chords-v1.log"
 
 ARRANGEMENT_PICKLE = "processed/arrangement.pk1"
 CHORD_PROGRESSION_PICKLE = "processed/chord_progressions.pk1"
-MARKOV_CHORD_PICKLE = "processed/markov_chords.pk1"
+FIRST_MARKOV_CHORD_PICKLE = "processed/first_markov_chords.pk1"
+SECOND_MARKOV_CHORD_PICKLE = "processed/second_markov_chords.pk1"
 MARKOV_BASS_PICKLE = "processed/markov_bass.pk1"
 
 GENERATIONS = 1000

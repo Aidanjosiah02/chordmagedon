@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+
+from src.types import FirstChain, SecondChain
 from .ChordProgression import ChordProgression
 from .Bassline import BassLine
 
@@ -15,8 +17,9 @@ class Arrangement:
                 "Arrangement must contain a valid chord progression"
             )
 
-    def evaluate_fitness(self):
-        self.fitness = self.progression.evaluate_fitness() + self.bassline.evaluate_fitness(self.progression)
+    def evaluate_fitness(self, first_markov: FirstChain, second_markov: SecondChain):
+        self.fitness = self.progression.evaluate_fitness(first_markov, second_markov) 
+            # + self.bassline.evaluate_fitness(self.progression)
         return self.fitness
     
     def get_progression(self) -> ChordProgression:
