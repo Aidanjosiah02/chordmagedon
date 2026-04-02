@@ -14,7 +14,7 @@ def crossover(parentA, parentB):
     #Child that we are returning later
     #Array we are storing our 6 children in? Idk ask Marvellous
     children = []
-    for i range 6:
+    for i in range (6):
         
         child_genome = []
 
