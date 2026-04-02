@@ -5,6 +5,9 @@ import numpy as np
 import random
 import numpy
 import mido
+from src.objects.Arrangement import Arrangement 
+from src.objects.ChordProgression import ChordProgression
+from src.objects.Bassline import BassLine
 # CODY TODO: LOOK INTO MIDO FOR MIDI OUTPUT - WOULD BE COOL
 
 # Uniform crossover
@@ -16,15 +19,30 @@ def crossover(parentA, parentB):
     children = []
     for i in range(6):
 
-        child_genome = []
+        progression = []
+        bassline = []
 
-        for a, b in zip(parentA, parentB):
+        counter = 0
+        for a, b in zip(parentA.progression.chords, parentB.progression.chords):
+
             # "Coin flip" to decide crossover
-            if random.random() < 0.5:
-                child_genome.append(a)
+            if a is not None:
+                progression.append(b)
+                bassline.append(parentB.bassline.notes[counter])
+            elif b is not None:
+                progression.append(a)
+                bassline.append(parentA.bassline.notes[counter])
+            elif random.random() < 0.5:
+                progression.append(a)
+                bassline.append(parentA.bassline.notes[counter])
             else:
-                child_genome.append(b)
-        children.append(child_genome)
+                progression.append(b)
+                bassline.append(parentB.bassline.notes[counter])
+
+        child_arrangement = Arrangement(progression=ChordProgression(chords=progression), bassline=BassLine(notes=bassline))
+        children.append(child_arrangement)
+
+        counter += 1
     return children
 
 
@@ -97,8 +115,8 @@ for i in range(GENERATIONS):
     for individual in population:
         individual.evaluate_fitness([markov])
 
-    total_fitness = sum([population.fitness for population in population])
-    print(f"Total fitness {total_fitness}")
+    median_fitness = max([population.fitness for population in population])
+    print(f"Total fitness {median_fitness}")
 
     # Select parents to crossover / mutate tournament style
     # trying groups of 8 at first
@@ -114,8 +132,8 @@ for i in range(GENERATIONS):
         new_population.append(parent1)
         new_population.append(parent2)
 
-        # children = crossover(parent1, parent2)
-        # new_population.extend(children)
+        children = crossover(parent1, parent2)
+        new_population.extend(children)
 
         competitors.remove(parent1)
         competitors.remove(parent2)
