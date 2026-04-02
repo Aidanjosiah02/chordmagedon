@@ -60,19 +60,28 @@ def mutate(genome):
     return data_set_genome
 
 
+# def tournament(participants):
+#     if len(participants) < 2:
+#         return [None, None]
+
+#     total_fitness = sum([participant.fitness for participant in participants])
+
+#     if total_fitness <= 0:
+#         return [None, None]
+
+#     fitnesses = [participant.fitness /
+#                  total_fitness for participant in participants]
+    
+#     print([a.fitness for a in participants])
+#     participant = np.random.choice(participants, size=2, replace=False, p=fitnesses)
+#     print([a.fitness for a in participant])
+#     return participant
+
 def tournament(participants):
     if len(participants) < 2:
         return [None, None]
-
-    total_fitness = sum([participant.fitness for participant in participants])
-
-    if total_fitness <= 0:
-        return [None, None]
-
-    fitnesses = [participant.fitness /
-                 total_fitness for participant in participants]
-
-    return np.random.choice(participants, size=2, replace=False, p=fitnesses)
+    winners = sorted(participants, key=lambda x: x.fitness, reverse=True)
+    return winners[0], winners[1]
 
 
 def export_midi():
