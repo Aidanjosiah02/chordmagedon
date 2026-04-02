@@ -56,6 +56,9 @@ QUALITY_ENUM_MAP: dict[str|None, Quality] = {
     'dim': Quality.DIMINISHED
 }
 
+DATASET = "data/chordonomicon_v2.csv"
+LOG = "logs/chords-v1.log"
+PICKLE = "processed/chord_progressions.pk1"
 DATA_DIR = Path("data")
 LOG_DIR = Path("logs")
 PROCESSED_DIR = Path("processed")
@@ -70,6 +73,10 @@ MARKOV_PICKLE_SUFFIX = "markov_chords.pkl"
 CHORD_TRANSITION_INFLUENCE = 0.5
 
 GENERATIONS = 15
+POPULATION_SIZE = 95000
+MUTATION_RATE = 0.05
+
+GENERATIONS = 1000
 POPULATION_SIZE = 95000
 MUTATION_RATE = 0.05
 
