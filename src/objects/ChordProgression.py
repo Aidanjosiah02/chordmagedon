@@ -36,3 +36,6 @@ class ChordProgression:
         for index in range(len(self.chords)):
             if random.random() < mutation_power:
                 pass
+    
+    def get_chords(self) -> list[Chord]:
+        return self.chords

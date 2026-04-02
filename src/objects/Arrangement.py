@@ -27,3 +27,6 @@ class Arrangement:
     
     def get_progression(self) -> ChordProgression:
         return self.progression
+    
+    def get_bassline(self) -> BassLine:
+        return self.bassline

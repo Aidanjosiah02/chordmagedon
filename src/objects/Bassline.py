@@ -17,3 +17,6 @@ class BassLine:
 
     def to_midi(self):
         pass
+
+    def get_notes(self):
+        return self.notes
