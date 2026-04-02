@@ -71,7 +71,7 @@ CHORD_TRANSITION_INFLUENCE = 0.5
 
 GENERATIONS = 1000
 POPULATION_SIZE = 95000
-
+MUTATION_RATE = 0.05
 
 
 # Chord types extracted during testing:

@@ -1,14 +1,8 @@
 from pathlib import Path
-
 from src.utils.io_handler import load_pickle
-import pathlib
-from src.constants import ARRANGEMENT_PICKLE, GENERATIONS, PROCESSED_DIR, MARKOV_PICKLE_SUFFIX
+from src.constants import ARRANGEMENT_PICKLE, GENERATIONS, PROCESSED_DIR, MARKOV_PICKLE_SUFFIX, MUTATION_SIZE, MUTATION_RATE
 import numpy as np
 import random
-
-GENERATIONS = 1000
-POPULATION_SIZE = 95000
-MUTATION_RATE = 0.05
 
 #Uniform crossover
 def crossover(parentA, parentB):
