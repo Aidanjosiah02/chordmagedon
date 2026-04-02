@@ -32,8 +32,10 @@ def mutate(genome):
 
     #Select a random point and alter it
     for gene in genome:
+        mutation_range = random.randInt(1,4)
         if random.random() < MUTATION_RATE:
-            data_set_genome.append(gene+1)
+            #Ensure that the data value does not go beyond 13
+            data_set_genome.append((gene+mutation_range)%13)
         else:
             data_set_genome.append(gene)
     return data_set_genome
