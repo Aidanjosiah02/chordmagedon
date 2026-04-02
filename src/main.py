@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from src.utils.io_handler import load_pickle
-from src.constants import ARRANGEMENT_PICKLE, GENERATIONS
+import pathlib
+from src.constants import ARRANGEMENT_PICKLE, GENERATIONS, PROCESSED_DIR, MARKOV_PICKLE_SUFFIX
 import numpy as np
 import random
 
@@ -42,11 +43,13 @@ def mutate(genome):
 
 
 def tournament(participants):
-    fitnesses = [participant.fitness for participant in participants]
+    total_fitness = sum([participant.fitness for participant in participants])
+    fitnesses = [participant.fitness/total_fitness for participant in participants]
     return np.random.choice(participants, size=2, replace=False, p=fitnesses)
 
 
-population = load_pickle(Path(ARRANGEMENT_PICKLE))
+population = load_pickle(PROCESSED_DIR/ARRANGEMENT_PICKLE)
+markov = load_pickle(PROCESSED_DIR / f"order2_{MARKOV_PICKLE_SUFFIX}")
 
 for i in range(GENERATIONS):
     new_population = []
@@ -54,12 +57,12 @@ for i in range(GENERATIONS):
     # We need to call the eval fitness function to calculate
     # the fitness functions for all the members
     for individual in population:
-        individual.evaluate_fitness()
+        individual.evaluate_fitness([markov])
 
     # Select parents to crossover / mutate tournament style
     # trying groups of 8 at first
     while len(population) > 8:
-        competitors = random.sample(population) 
+        competitors = random.sample(population, 8)
         parent1, parent2 = tournament(competitors)
         new_population.append(parent1)
         new_population.append(parent2)
@@ -68,6 +71,6 @@ for i in range(GENERATIONS):
         competitors.remove(parent1)
         competitors.remove(parent2)
         rejects.extend(competitors)
-        print('hi')
+        print(len(population))
 
     population = new_population
