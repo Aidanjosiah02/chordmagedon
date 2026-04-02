@@ -5,27 +5,21 @@ import numpy as np
 import random
 import numpy
 import mido
-#CODY TODO: LOOK INTO MIDO FOR MIDI OUTPUT - WOULD BE COOL
+# CODY TODO: LOOK INTO MIDO FOR MIDI OUTPUT - WOULD BE COOL
 
-#Uniform crossover
+# Uniform crossover
+
+
 def crossover(parentA, parentB):
-    #Child that we are returning later
-    #Array we are storing our 6 children in? Idk ask Marvellous
+    # Child that we are returning later
+    # Array we are storing our 6 children in? Idk ask Marvellous
     children = []
-    for i in range (6):
-        
+    for i in range(6):
+
         child_genome = []
 
-    for a,b in zip(parentA, parentB):
-        #"Coin flip" to decide crossover
-        if random.random() < 0.5:
-            child_genome.append(a)
-        else:
-            child_genome.append(b)
-            
-    return child_genome
-        for a,b in zip(parentA, parentB):
-            #"Coin flip" to decide crossover
+        for a, b in zip(parentA, parentB):
+            # "Coin flip" to decide crossover
             if random.random() < 0.5:
                 child_genome.append(a)
             else:
@@ -33,15 +27,16 @@ def crossover(parentA, parentB):
         children.append(child_genome)
     return children
 
+
 def mutate(genome):
     data_set_genome = []
 
-    #Select a random point and alter it
+    # Select a random point and alter it
     for gene in genome:
-        mutation_range = random.randInt(1,4)
+        mutation_range = random.randInt(1, 4)
         if random.random() < MUTATION_RATE:
-            #Ensure that the data value does not go beyond 13
-            data_set_genome.append((gene+mutation_range)%13)
+            # Ensure that the data value does not go beyond 13
+            data_set_genome.append((gene+mutation_range) % 13)
         else:
             data_set_genome.append(gene)
     return data_set_genome
@@ -56,12 +51,14 @@ def tournament(participants):
     if total_fitness <= 0:
         return [None, None]
 
-    fitnesses = [participant.fitness/total_fitness for participant in participants]
+    fitnesses = [participant.fitness /
+                 total_fitness for participant in participants]
 
     return np.random.choice(participants, size=2, replace=False, p=fitnesses)
 
+
 def export_midi():
-    #create file
+    # create file
     file = mido.MidiFile('song.mid', type=1)
     chord_track = MidiTrack()
     bass_track = MidiTrack()
@@ -69,21 +66,21 @@ def export_midi():
     file.tracks.append(chord_track)
     file.tracks.append(bass_track)
 
-    #specs of output - Default as of now
+    # specs of output - Default as of now
     ticks_per_beat = 480
     velocity = 64
 
-    #data - Put in when finished
+    # data - Put in when finished
     chordprog = []
 
     bassline = []
-    
-    #put data inside of the file - for msg in MidiFile? Look back later
+
+    # put data inside of the file - for msg in MidiFile? Look back later
     chord_track.append(Message('note_on', note=64, velocity=64, time=32))
 
     bass_track.append(Message('note_on', note=64, velocity=64, time=32))
 
-    #save file
+    # save file
     mid.save('song.mid')
     print("Song finished!")
 
@@ -99,7 +96,6 @@ for i in range(GENERATIONS):
     # the fitness functions for all the members
     for individual in population:
         individual.evaluate_fitness([markov])
-
 
     total_fitness = sum([population.fitness for population in population])
     print(f"Total fitness {total_fitness}")
