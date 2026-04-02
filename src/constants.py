@@ -33,9 +33,30 @@ QUALITY_ENUM_MAP: dict[str|None, Quality] = {
     'dim': Quality.DIMINISHED
 }
 
+<<<<<<< Updated upstream
 DATASET = "data/chordonomicon_v2.csv"
 LOG = "logs/chords-v1.log"
 PICKLE = "processed/chord_progressions.pk1"
+=======
+DATA_DIR = Path("data")
+LOG_DIR = Path("logs")
+PROCESSED_DIR = Path("processed")
+
+DATASET = DATA_DIR / "chordonomicon_v2.csv"
+
+ARRANGEMENT_LOG = "arrangements.log"
+ARRANGEMENT_PICKLE = "arrangements.pkl"
+MARKOV_LOG_SUFFIX = "markov_chords.log"
+MARKOV_PICKLE_SUFFIX = "markov_chords.pkl"
+
+CHORD_TRANSITION_INFLUENCE = 0.5
+
+GENERATIONS = 1000
+POPULATION_SIZE = 95000
+MUTATION_RATE = 0.05
+
+
+>>>>>>> Stashed changes
 
 # Chord types extracted during testing:
 # {'', 'minadd13', '13', 'dim9', '7sus4', 'maj13', '13b9', '7b9', 'dim', 'add13', 'minmaj9', 'majs911s', 'min9', '13b', 'maj9', 'minadd11', 'maj1311s', 'dim13b9', 'maj11', 'sus4', 'maj7sus2', 'majs9', 'maj911s', 'dimb9', '9', 'minmaj7', 'add11', 'maj7', 'dim7', 'augmaj9', 'aug', 'maj7sus4', '11b9', 'min11', 'min13', '11', 'minadd9', 'min7', 'add9', '7sus2', '11s', 'minmaj11', 'min', 'dimb7', 'augmaj7', 'sus2', 'no3d', '7'}
