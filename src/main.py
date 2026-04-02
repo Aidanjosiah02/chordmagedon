@@ -5,13 +5,34 @@ from src.constants import ARRANGEMENT_PICKLE, GENERATIONS
 import numpy as np
 import random
 
+GENERATIONS = 1000
+POPULATION_SIZE = 95000
+MUTATION_RATE = 0.05
 
-def crossover():
-    pass
+#Uniform crossover
+def crossover(parentA, parentB):
+    #Child that we are returning later
+    child_genome = []
 
+    for a,b in zip(parentA, parentB):
+        #"Coin flip" to decide crossover
+        if random.random() < 0.5:
+            child_genome.append(a)
+        else:
+            child_genome.append(b)
+            
+    return child_genome
 
-def mutate():
-    pass
+def mutate(genome):
+    data_set_genome = []
+
+    #Select a random point and alter it
+    for gene in genome:
+        if random.random() < MUTATION_RATE:
+            data_set_genome.append(gene+1)
+        else:
+            data_set_genome.append(gene)
+    return data_set_genome
 
 
 def tournament(participants):
