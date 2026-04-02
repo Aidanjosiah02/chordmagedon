@@ -62,6 +62,10 @@ for i in range(GENERATIONS):
     for individual in population:
         individual.evaluate_fitness([markov])
 
+
+    total_fitness = sum([population.fitness for population in population])
+    print(f"Total fitness {total_fitness}")
+
     # Select parents to crossover / mutate tournament style
     # trying groups of 8 at first
 
@@ -79,9 +83,10 @@ for i in range(GENERATIONS):
         # children = crossover(parent1, parent2)
         # new_population.extend(children)
 
+        competitors.remove(parent1)
+        competitors.remove(parent2)
         rejects.extend(competitors)
 
-    print(len(rejects))
-    new_population.extend(rejects[::POPULATION_SIZE-len(new_population)])
+    new_population.extend(rejects[:POPULATION_SIZE-len(new_population)])
     population = new_population
     print(f"Generation {i}")
