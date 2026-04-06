@@ -8,7 +8,6 @@ import mido
 from src.objects.Arrangement import Arrangement 
 from src.objects.ChordProgression import ChordProgression
 from src.objects.Bassline import BassLine
-# CODY TODO: LOOK INTO MIDO FOR MIDI OUTPUT - WOULD BE COOL
 
 # Please compare
 def single_crossover(parent_a: Arrangement, parent_b: Arrangement) -> Arrangement:
@@ -25,7 +24,6 @@ def single_crossover(parent_a: Arrangement, parent_b: Arrangement) -> Arrangemen
 # Uniform crossover
 def uniform_crossover(parentA: Arrangement, parentB: Arrangement):
     # Child that we are returning later
-    # Array we are storing our 6 children in? Idk ask Marvellous
     children = []
     for i in range(6):
 
@@ -94,31 +92,47 @@ def tournament(participants):
     return winners[0], winners[1]
 
 
-def export_midi():
+def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat=480, velocity=64):
     # create file
-    file = mido.MidiFile('song.mid', type=1)
-    chord_track = MidiTrack()
-    bass_track = MidiTrack()
+    file = mido.MidiFile(type=1, ticks_per_beat=ticks_per_beat)
+    chord_track = mido.MidiTrack()
+    bass_track = mido.MidiTrack()
 
     file.tracks.append(chord_track)
     file.tracks.append(bass_track)
 
-    # specs of output - Default as of now
-    ticks_per_beat = 480
-    velocity = 64
+    # tempo
+    tempo_message = mido.MetaMessage('set_tempo', tempo=tempo, time = 0)
+    chord_track.append(tempo_message)
+    bass_track.append(tempo_message)
 
-    # data - Put in when finished
-    chordprog = []
+    # note duration
+    note_duration = ticks_per_beat * 2
 
-    bassline = []
+    # chord stuff
+    for chord in arrangement.progression.chords:
+        # is chord right format
+        notes = chord if hasattr(chord, '__iter__') else [chord]
 
-    # put data inside of the file - for msg in MidiFile? Look back later
-    chord_track.append(Message('note_on', note=64, velocity=64, time=32))
-
-    bass_track.append(Message('note_on', note=64, velocity=64, time=32))
-
+        # starts notes
+        for i, note in enumerate(notes):
+            chord_track.append(mido.Message('note_on', note=int(note), velocity=velocity, time = 0))
+        # ends notes
+        for i, note in enumerate(notes):
+            time_change = note_duration if i == 0 else 0
+            chord_track.append(mido.Message('note_off', note=int(note), velocity = 0, time = time_change))
+    # bass stuff - same logic I think - ask team
+    for note in arrangement.bassline.notes:
+        #starts bass notes
+        notes = [note]
+        for i, n in enumerate(notes):
+            bass_track.append(mido.Message('note_on', note=int(n), velocity = velocity, time = 0))
+        #ends bass notes
+        for i, n in enumerate(notes):
+            time_change = note_duration if i == 0 else 0
+            bass_track.append(mido.Message('note_off', note=int(n), velocity = 0, time = time_change))
     # save file
-    mid.save('song.mid')
+    file.save('song.mid')
     print("Song finished!")
 
 
