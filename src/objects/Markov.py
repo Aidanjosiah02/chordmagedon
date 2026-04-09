@@ -6,8 +6,8 @@ if TYPE_CHECKING:
     from src.objects.Arrangement import Arrangement
 
 class Markov:
-    def __init__(self, order: int, part: Part):
-        self.chain: Chain = {}
+    def __init__(self, order: int, part: Part, chain: Chain = {} ):
+        self.chain = chain
         self.order = order
         self.part = part
 
