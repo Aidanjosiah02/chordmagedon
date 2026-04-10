@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from src.constants import Part
+from src.constants import SCALE_INVALID, Part
 from src.objects.Markov import Markov
 from .ChordProgression import ChordProgression
 from .Bassline import BassLine
@@ -30,3 +30,8 @@ class Arrangement:
     
     def get_bassline(self) -> BassLine:
         return self.bassline
+    
+    def normalize(self) -> None:
+        self.progression.normalize()
+        self.bassline.transpose(-self.progression.get_root())
+

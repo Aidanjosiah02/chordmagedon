@@ -53,14 +53,14 @@ def main():
     ]
 
     # Fitness evaluation
-    print("\nEvaluating arrangement fitness...")
-    for arrangement in arrangements:
-        arrangement.evaluate_fitness(markovs)
-        # print(str(arrangement) + " = " + str(fitness))
+    # print("\nEvaluating arrangement fitness...")
+    # for arrangement in arrangements:
+    #     arrangement.evaluate_fitness(markovs)
+    #     # print(str(arrangement) + " = " + str(fitness))
 
-    cliche = max(arrangements, key=lambda a: a.fitness)
-    print(f"\nMost 'Cliche' Arrangement (Fitness: {cliche.fitness}):")
-    print(cliche)
+    # cliche = max(arrangements, key=lambda a: a.fitness)
+    # print(f"\nMost 'Cliche' Arrangement (Fitness: {cliche.fitness}):")
+    # print(cliche)
 
 if __name__ == "__main__":
     main()

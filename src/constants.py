@@ -41,6 +41,13 @@ VOCAB_SIZE = len([
     if (quality, seventhType) not in EXCLUSIONS
 ])
 
+SCALE_INVALID = {
+    "STANDARD": {1, 3, 6, 8, 10},
+    "HARMONIC_MINOR": {1, 4, 6, 9, 10},
+    "MELODIC_MINOR_ASC": {1, 4, 6, 8, 10},
+    "DIMINISHED": {1, 4, 7, 10}
+}
+
 CHORD_REGEX = compile(r'^(?P<root>[A-G](?:s(?!us)|b)?)(?P<quality>min|no3d|aug|dim)?(?P<extension>(?:maj)?[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?(?P<remainder>.*)$')
 
 SECTION_REGEX = r'(<[^>]+>)'
@@ -56,7 +63,6 @@ QUALITY_ENUM_MAP: dict[str|None, Quality] = {
     'dim': Quality.DIMINISHED
 }
 
-DATASET = "data/chordonomicon_v2.csv"
 LOG = "logs/chords-v1.log"
 PICKLE = "processed/chord_progressions.pk1"
 DATA_DIR = Path("data")
@@ -72,13 +78,48 @@ MARKOV_PICKLE_SUFFIX = "markov_chords.pkl"
 
 CHORD_TRANSITION_INFLUENCE = 0.5
 
-GENERATIONS = 15
-POPULATION_SIZE = 95000
-MUTATION_RATE = 0.05
-
 GENERATIONS = 1000
 POPULATION_SIZE = 95000
 MUTATION_RATE = 0.05
+
+NOTE_POSITIONS = {
+    Quality.MAJOR.value: [0, 4, 7],
+    Quality.MINOR.value: [0, 3, 7],
+    Quality.SUS2.value: [0, 2, 7],
+    Quality.SUS4.value: [0, 5, 7],
+    Quality.POWER.value: [0, 7],
+    Quality.AUGMENTED.value: [0, 4, 8],
+    Quality.DIMINISHED.value: [0, 3, 6],
+}
+
+POSITION_WEIGHTS = [5, 0, 2] 
+BASE_CHORD_WEIGHT = 2
+
+# SCALE_MASK = [6, 0, 5, 0, 5, 5, 0, 6, 1, 6, 0, 5]
+SCALE_MASK = [7, 0, 5, 0, 5, 5, 0, 6, 0, 7, 0, 5]
+
+OCTAVE_NOTE_COUNT = 12
+
+# SCALE_INVALID_NOTES = {
+#     "STANDARD": {1, 3, 6, 8, 10},
+#     "HARMONIC_MINOR": {1, 4, 6, 9, 10},
+#     "MELODIC_MINOR_ASC": {1, 4, 6, 8, 10},
+#     "DIMINISHED": {1, 4, 7, 10}
+# }
+
+# SCALE_WEIGHTS = {
+#     # Strong emphasis on Root(0), Mediant(4), and Dominant(7)
+#     "STANDARD": [5, 0, 2, 0, 4, 1, 0, 4, 0, 2, 0, 2],
+#     # Root(0), Minor 3rd(3), Perfect 5th(7), and the "Leading Tone" Major 7th(11)
+#     "HARMONIC_MINOR": [5, 0, 2, 4, 0, 2, 0, 4, 2, 0, 0, 4],
+#     # Root(0), Minor 3rd(3), and the bright Major 6th(9) + Major 7th(11)
+#     "MELODIC_MINOR_ASC": [5, 0, 2, 4, 0, 2, 0, 4, 0, 3, 0, 3],
+#     # Symmetric weighting: Equal emphasis on the diminished chords [0, 3, 6, 9]
+#     "DIMINISHED": [4, 0, 2, 4, 0, 2, 4, 0, 2, 4, 0, 2]
+# }
+
+
+
 
 
 # Chord types extracted during testing:

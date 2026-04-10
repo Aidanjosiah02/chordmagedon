@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import random
 from src.objects.Markov import Markov
-from src.constants import CHORD_TRANSITION_INFLUENCE
+from src.constants import CHORD_TRANSITION_INFLUENCE, OCTAVE_NOTE_COUNT, SCALE_MASK
 from src.objects.Chord import Chord
 from src.types import ChordTuple
 
@@ -39,3 +39,34 @@ class ChordProgression:
     
     def get_chords(self) -> list[Chord]:
         return self.chords
+    
+    def get_root(self) -> int:
+        return self.root
+    
+    def _get_all_note_weights(self) -> list[int]:
+        total_weights = [0] * OCTAVE_NOTE_COUNT
+        for chord in self.chords:
+            chord_weights = chord.get_note_weights()
+            for note, weight in enumerate(chord_weights):
+                total_weights[note] += weight
+        return total_weights
+
+    def normalize(self) -> None:
+        note_occurrence = self._get_all_note_weights()
+        
+        best_score = -1
+        best_shift = 0
+        for shift in range(OCTAVE_NOTE_COUNT):
+            score = 0
+            for index in range(OCTAVE_NOTE_COUNT):
+                score += note_occurrence[(index + shift) % OCTAVE_NOTE_COUNT] * SCALE_MASK[index]
+                
+            if score > best_score:
+                best_score = score
+                best_shift = shift
+        
+        self.root = best_shift
+
+        if best_shift != 0:
+            for chord in self.chords:
+                chord.transpose(-best_shift)

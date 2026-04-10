@@ -82,6 +82,7 @@ def parse_arrangements(slash_arrangement_strings: list[str]) -> list[Arrangement
         )
 
         arrangement.validate()
+        arrangement.normalize()
         arrangements.append(arrangement)
 
     return arrangements
