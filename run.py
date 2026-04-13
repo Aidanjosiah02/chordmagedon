@@ -49,10 +49,11 @@ def main():
     markovs = [
         run_markov_pipeline(arrangements, order=1), 
         run_markov_pipeline(arrangements, order=2), 
-        run_markov_pipeline(arrangements, order=3)
+        run_markov_pipeline(arrangements, order=3),
+        run_markov_pipeline(arrangements, order=4),
     ]
 
-    # Fitness evaluation
+    # # Fitness evaluation
     # print("\nEvaluating arrangement fitness...")
     # for arrangement in arrangements:
     #     arrangement.evaluate_fitness(markovs)

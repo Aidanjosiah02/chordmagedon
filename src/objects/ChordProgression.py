@@ -69,4 +69,7 @@ class ChordProgression:
 
         if best_shift != 0:
             for chord in self.chords:
+                # As best_shift describes how many shifts the mask had to make to find the best match, 
+                # best_shift consequently describes how many semitones the current chord progression is ABOVE C, or, 0. 
+                # Therefore, to shift the chord progression down to 0, we must transpose DOWN by subtracting best_shift.
                 chord.transpose(-best_shift)

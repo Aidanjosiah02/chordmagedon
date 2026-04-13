@@ -5,8 +5,14 @@ from src.types import Chain, Key, ChordTuple
 if TYPE_CHECKING:
     from src.objects.Arrangement import Arrangement
 
+# Science building
+
+# 1355
+
 class Markov:
-    def __init__(self, order: int, part: Part, chain: Chain = {} ):
+    def __init__(self, order: int, part: Part, chain: Chain | None = None ):
+        if chain is None:
+            chain = {}
         self.chain = chain
         self.order = order
         self.part = part
