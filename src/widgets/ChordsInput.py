@@ -14,11 +14,12 @@ class ChordsInput(App):
     submitted = False
 
     def compose(self) -> ComposeResult:
+
         # This is chord regex without the capture group names
         SINGLE_CHORD_VALIDATOR = (
-            r'(?:[A-G](?:s(?!us)|b)?)'
-            r'(?:min|no3d|aug|dim|sus2|sus4)?'
-            r'(?:(?:maj)?[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?'
+            r'(?:[A-G](?:s(?!us)|b)?)'                # Root
+            r'(?:maj|min|no3d|aug|dim|sus2|sus4)?'    # quality
+            r'(?:[bs]?(?:7|9|11|13|15|17)(?:[bs](?![0-9]))?)?'  # Extension
         )
 
         PROG_PATTERN = fr"^{

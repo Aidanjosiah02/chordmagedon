@@ -4,7 +4,7 @@ from src.objects.Markov import Markov
 from src.constants import CHORD_TRANSITION_INFLUENCE, OCTAVE_NOTE_COUNT, SCALE_MASK
 from src.objects.Chord import Chord
 from src.types import ChordTuple
-
+from src.constants import RESOLUTION_SCORE_TABLE
 
 @dataclass(slots=True)
 class ChordProgression:
@@ -21,6 +21,8 @@ class ChordProgression:
         num_markovs = len(markovs)
 
         total_progression_score = 0.0
+
+        # Check similarities to 80s music
         for index in range(num_chords):
             score = 0.0
             for markov in markovs:
@@ -30,11 +32,44 @@ class ChordProgression:
             total_progression_score += (score / num_markovs)
         fitness = total_progression_score / num_chords
 
-        # penalize duplication
-        fitness = fitness - (0.5 * self.duplication_ratio())
+        # Check song structure
+        # We attempt to group the chord prog to reasonable phrases and average the score   
+        fitness += self.get_phrasing_average_score()
+
+        fitness = fitness / 2
+
+        # penalize overly duplication
+        fitness = fitness * (1.0 - (0.5 * self.duplication_ratio()))
 
         self.fitness = fitness
         return self.fitness
+
+    def get_phrasing_average_score(self):
+        phrase_lengths = [3, 4, 5, 6]
+        scores = []
+        
+        for length in phrase_lengths:
+            score = self.evaluate_phrase_of_length(length)
+            scores.append(score)
+            
+        return sum(scores) / len(scores)
+
+    def evaluate_phrase_of_length(self, length: int) -> float:
+        total_score = 0
+        transitions = 0
+
+        for i in range(length, len(self.chords), length):
+            prev = self.chords[i - 1].quality
+            curr = self.chords[i].quality
+
+            total_score += RESOLUTION_SCORE_TABLE[(prev, curr)]
+            transitions += 1
+
+        if transitions == 0:
+            return 0.0
+
+        # normalize to 0–1
+        return (total_score / transitions) / 100.0
 
     def to_tuples(self) -> list[ChordTuple]:
         return [chord.to_tuple() for chord in self.chords]
@@ -88,7 +123,9 @@ class ChordProgression:
         for chord in self.chords:
             chord.transpose(steps)
             
-    def duplication_ratio(self) -> int:
-        unique_count = len(set(self.chords))
-        total_count = len(self.chords)
-        return 1 - (unique_count / total_count)
+    def duplication_ratio(self) -> float:
+        if not self.chords:
+            return 0.0
+        unique_chords = {(c.root, c.quality, c.seventhType)
+                         for c in self.chords}
+        return 1 - (len(unique_chords) / len(self.chords))
