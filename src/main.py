@@ -25,7 +25,6 @@ spaced_chords = " ".join(chords_list)
 chordList: Arrangement = parse_arrangements([spaced_chords])[0]
 
 print(chordList)
->>>>>> > 3915e66 (Collect user input for chords)
 
 # Please compare
 
