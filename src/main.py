@@ -10,7 +10,6 @@ from src.objects.ChordProgression import ChordProgression
 from src.objects.Bassline import BassLine
 
 from src.objects.MidiExport import export_midi, translate_midi
-#CODY TODO: Translate the translation so it is compatible with mido
 
 # Please compare
 def single_crossover(parent_a: Arrangement, parent_b: Arrangement) -> Arrangement:
@@ -57,19 +56,36 @@ def uniform_crossover(parentA: Arrangement, parentB: Arrangement):
     return children
 
 
-def mutate(genome):
-    data_set_genome = []
+def mutate(parent: Arrangement):
+    #Where we are putting mutations in before return - Progression and bass notes
+    mutated_chords =[]
+    mutated_notes = []
 
-    # Select a random point and alter it
-    for gene in genome:
-        mutation_range = random.randInt(1, 4)
+    for chord, note in zip(parent.progression.chords, parent.bassline.notes):
+        mutation_range = random.randint(1,4)
+        #Chord stuff
         if random.random() < MUTATION_RATE:
-            # Ensure that the data value does not go beyond 13
-            data_set_genome.append((gene+mutation_range) % 13)
+            if chord is not None:
+                #Ensuring it does not go past valid value
+                mutated_chord = Chord(notes = [(n + mutation_range) % 13 for n in chord.notes])
+                mutated_chords.append(mutated_chord)
+            else:
+                mutated_chords.append(None)
         else:
-            data_set_genome.append(gene)
-    return data_set_genome
+            mutated_chords.append(chord)
+            
+        #Bass stuff
+        if random.random() < MUTATION_RATE:
+            if note is not None:
+                #Ensuring it does not go past valid value
+                mutated_notes.append((note + mutation_range) % 13)
+            else:
+                mutated_notes.append(None)
+        else:
+            mutated_notes.append(note)
 
+    mutated_arrangement = Arrangement(progression=ChordProgression(chords = mutated_chords), bassline = BassLine(notes=mutated_notes))
+    return mutated_arrangement
 
 # def tournament(participants):
 #     if len(participants) < 2:
