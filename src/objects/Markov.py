@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from src.formulas import score_saturator
 from src.constants import Part
 from src.types import Chain, Key, ChordTuple
 
@@ -37,27 +38,28 @@ class Markov:
                 # initializes target chord key automatically if not exists and stores it there.
                 target_dict[target] = target_dict.get(target, 0) + 1
 
+    def generate_context(self, sequence: list[ChordTuple], index: int) -> Key:
+        if self.order == 1:
+            return (sequence[index],)
+        else:
+            return tuple(sequence[index : index + self.order])
+
     def get_score(self, sequence: list[ChordTuple], index: int, influence: float = 0.5) -> float:
         if index + self.order >= len(sequence):
             return 0.0
         
-        context: Key
-        if self.order == 1:
-            context = (sequence[index],)
-        else:
-            context = tuple(sequence[index : index + self.order])
-        
-        target = sequence[index + self.order]
-        transition_dict = self.chain.get(context)     
+        context: Key = self.generate_context(sequence, index)
+        target = sequence[self.order + index]
+
+        transition_dict = self.chain.get(context)
         if not transition_dict:
             return 0.0
+        
         count = transition_dict.get(target, 0)
         if count == 0:
             return 0.0
 
-        total: int = sum(transition_dict.values())
-        relative_freq = count / total
-        return 1 - (1 / (1 + 100 * relative_freq * influence))
+        return score_saturator(max(transition_dict.values()), count, influence)
     
     def get_entry_by_key(self, key: Key) -> dict[ChordTuple, int]:
         return self.chain.get(key, {})

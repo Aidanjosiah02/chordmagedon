@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from src.constants import SCALE_INVALID, Part
+from src.constants import Part
 from src.objects.Markov import Markov
 from .ChordProgression import ChordProgression
 from .Bassline import BassLine
@@ -21,8 +21,9 @@ class Arrangement:
         chord_markovs = [markov for markov in markovs if markov.part == Part.CHORDS]
         # bass_markovs = [markov for markov in markovs if markov.part == Part.BASS]
         chord_fitness = self.progression.evaluate_fitness(chord_markovs) 
-        # bass_fitness = self.bassline.evaluate_fitness(bass_markovs)
-        self.fitness = chord_fitness # + bass_fitness
+        bass_fitness = self.bassline.evaluate_fitness(self.progression)
+        # print("bass: ", bass_fitness, ". chord: ", chord_fitness)
+        self.fitness = (chord_fitness + bass_fitness) / 2
         return self.fitness
     
     def get_progression(self) -> ChordProgression:
@@ -34,4 +35,8 @@ class Arrangement:
     def normalize(self) -> None:
         self.progression.normalize()
         self.bassline.transpose(-self.progression.get_root())
+
+    def transpose(self, steps: int) -> None:
+        self.progression.transpose(steps)
+        self.bassline.transpose(steps)
 
