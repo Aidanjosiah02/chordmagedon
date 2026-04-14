@@ -6,10 +6,10 @@ from src.utils.parser import parse_arrangements
 
 def run_dataset():
     print(f"\nLoading Dataset: {DATASET}")
-    chord_strings = parse_csv(DATASET)
+    progression_strings = parse_csv(DATASET)
     
     print("Parsing arrangements...")
-    arrangements = parse_arrangements(chord_strings)
+    arrangements = parse_arrangements(progression_strings)
     
     log_file = LOG_DIR / ARRANGEMENT_LOG
     pickle_file = PROCESSED_DIR / ARRANGEMENT_PICKLE
@@ -53,11 +53,11 @@ def main():
         run_markov_pipeline(arrangements, order=4),
     ]
 
-    # # Fitness evaluation
-    # print("\nEvaluating arrangement fitness...")
-    # for arrangement in arrangements:
-    #     arrangement.evaluate_fitness(markovs)
-    #     # print(str(arrangement) + " = " + str(fitness))
+    # Fitness evaluation
+    print("\nEvaluating arrangement fitness...")
+    for arrangement in arrangements:
+        arrangement.evaluate_fitness(markovs)
+        # print(str(arrangement) + " = " + str(fitness))
 
     # cliche = max(arrangements, key=lambda a: a.fitness)
     # print(f"\nMost 'Cliche' Arrangement (Fitness: {cliche.fitness}):")

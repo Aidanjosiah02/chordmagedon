@@ -58,6 +58,8 @@ class ChordProgression:
                 total_weights[note] += weight
         return total_weights
 
+    # Allows the Markov chain to impilcitly encode transition probabilities based on their pitch relative to the key of the chord progression. 
+    # Also may help crossovers be more consistent as all chord progressions will be of the same key before transposing.
     def normalize(self) -> None:
         note_occurrence = self._get_all_note_weights()
 
@@ -82,6 +84,10 @@ class ChordProgression:
                 # Therefore, to shift the chord progression down to 0, we must transpose DOWN by subtracting best_shift.
                 chord.transpose(-best_shift)
 
+    def transpose(self, steps: int) -> None:
+        for chord in self.chords:
+            chord.transpose(steps)
+            
     def duplication_ratio(self) -> int:
         unique_count = len(set(self.chords))
         total_count = len(self.chords)
