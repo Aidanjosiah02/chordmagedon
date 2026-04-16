@@ -14,11 +14,16 @@ def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat
 
     file.tracks.append(chord_track)
     file.tracks.append(bass_track)
-
+    
     # tempo
     tempo_message = mido.MetaMessage('set_tempo', tempo=tempo, time = 0)
     chord_track.append(tempo_message)
     bass_track.append(tempo_message)
+
+    # change instruments
+    #90 - Polysynth, 38 - Synth Bass 1
+    chord_track.append(mido.Message('program_change', program=90, time = 0))
+    bass_track.append(mido.Message("program_change", program=38, time=0))
 
     # note duration
     note_duration = ticks_per_beat * 2
@@ -46,7 +51,7 @@ def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat
         bass_track.append(mido.Message('note_off', note=int(midi_note), velocity = 0, time=note_duration))
     
     # save file
-    file.save('song.mid')
+    file.save(filename)
     print("Song finished!")
 
 #Turn the output into something compatible with mido export  
