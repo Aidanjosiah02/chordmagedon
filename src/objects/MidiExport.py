@@ -24,49 +24,38 @@ def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat
     note_duration = ticks_per_beat * 2
 
     # chord stuff
-    # is chord right format - Use translation function
-    notes = translate_midi_chord(arrangement.progression.chords)
-    # starts notes
-    for i, note in enumerate(notes):
-        chord_track.append(mido.Message('note_on', note=int(note), velocity=velocity, time = 0))
-    # ends notes
-    for i, note in enumerate(notes):
-        time_change = note_duration if i == 0 else 0
-        chord_track.append(mido.Message('note_off', note=int(note), velocity = 0, time = time_change))
-
-    # bass stuff - same logic I think - ask team
-    #starts bass notes
-    notes = translate_midi_bass(arrangement.bassline.notes)
-    for i, n in enumerate(notes):
-        bass_track.append(mido.Message('note_on', note=int(n), velocity = velocity, time = 0))
-    #ends bass notes
-    for i, n in enumerate(notes):
-        time_change = note_duration if i == 0 else 0
-        bass_track.append(mido.Message('note_off', note=int(n), velocity = 0, time = time_change))
+    for chord in arrangement.progression.chords:
+        if chord is None:
+            chord_track.append(mido.Message('note_on', note=0, velocity=0, time=note_duration))
+            continue
+        midi_notes = translate_midi_chord(chord)
+        for note in midi_notes:
+            # turn on notes
+            chord_track.append(mido.Message('note_on', note=int(note), velocity=velocity, time=0))
+        for i, note in enumerate(midi_notes):
+            # turn off notes 
+            chord_track.append(mido.Message('note_off', note=int(note), velocity=0, time=note_duration if i == 0 else 0))
+    # bass stuff
+    for note in arrangement.bassline.notes:
+        if note is None:
+            bass_track.append(mido.Message('note_on', note = 0, velocity = 0, time=note_duration))
+            continue
+        midi_note = translate_midi_bass(note)
+        #turn on and off
+        bass_track.append(mido.Message('note_on', note=int(midi_note), velocity=velocity, time=0))
+        bass_track.append(mido.Message('note_off', note=int(midi_note), velocity = 0, time=note_duration))
+    
     # save file
     file.save('song.mid')
     print("Song finished!")
 
 #Turn the output into something compatible with mido export  
-def translate_midi_chord(notes):
-    NOTE_MAP = {'C': 0, 'Cs': 1, 'Db': 1, 'D': 2, 'Ds': 3, 'Eb': 3, 'E': 4, 'F': 5, 'Fs': 6, 'Gb': 6, 'G': 7, 'Gs': 8, 'Ab': 8, 'A': 9, 'As': 10, 'Bb': 10, 'B': 11}
-    result_list = []
-    #Add 48 to each value for a certain octave - Maybe 60 if it sounds better
-    for note in notes:
-        if note in NOTE_MAP:
-            result_list.append(NOTE_MAP[note] + 48)
-        else:
-            print("Unknown note")
-
-    #What we are giving back to Mido
-    return result_list
+def translate_midi_chord(chord):
+   from src.constants import NOTE_POSITIONS
+   intervals = NOTE_POSITIONS[chord.quality.value]
+   midi_notes = [(chord.root + interval + 48) for interval in intervals]
+   return midi_notes
                 
-def translate_midi_bass(notes):
-    BASS_MAP = {'C1': 24, 'E1': 28, 'G1': 31, 'A1': 33, 'C2': 36, 'E2': 40, 'G2': 43, 'A2': 45, 'C3': 48}
-    result_list = []
-    for note in notes:
-        if note in BASS_MAP:
-            result_list.append(BASS_MAP[note])
-        else:
-            print("Unknown")
-    return result_list
+def translate_midi_bass(note):
+    midi_note = (note + 36)
+    return midi_note
