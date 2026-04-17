@@ -1,7 +1,8 @@
 import statistics
+import copy
 from src.objects.Chord import Chord
 from src.utils.io_handler import load_pickle
-from src.constants import ARRANGEMENT_PICKLE, GENERATIONS, PROCESSED_DIR, MARKOV_PICKLE_SUFFIX, MUTATION_RATE, POPULATION_SIZE, NOTE_MAP
+from src.constants import ARRANGEMENT_PICKLE, GENERATIONS, PROCESSED_DIR, MARKOV_PICKLE_SUFFIX, MUTATION_RATE, POPULATION_SIZE, NOTE_MAP, OCTAVE_NOTE_COUNT, NOTE_MAP, ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE
 import numpy as np
 import random
 from src.objects.Arrangement import Arrangement
@@ -10,8 +11,10 @@ from src.objects.Bassline import BassLine
 from src.widgets.CompositionKeySelection import CompositionKeySelection
 from src.widgets.ChordsInput import ChordsInput
 from src.utils.parser import parse_arrangements
+
 keySelection = CompositionKeySelection()
 key = keySelection.run()
+transposition_factor = -NOTE_MAP.get(key, 0)
 
 if key is None:
     print("No key Selected")
@@ -23,24 +26,6 @@ raw_input = chordsInput.run()
 chords_list = [item.strip() for item in raw_input.split(',')]
 spaced_chords = " ".join(chords_list)
 chordList: Arrangement = parse_arrangements([spaced_chords])[0]
-
-print(chordList)
-
-# Please compare
-
-
-def single_crossover(parent_a: Arrangement, parent_b: Arrangement) -> Arrangement:
-    # Single-point crossover: take half from A, half from B
-    point = random.randint(1, 7)
-    a_chords = parent_a.get_progression().get_chords()
-    b_chords = parent_b.get_progression().get_chords()
-    child_chords: list[Chord] = a_chords[:point] + b_chords[point:]
-    a_bass = parent_a.get_bassline().get_notes()
-    b_bass = parent_b.get_bassline().get_notes()
-    child_bass: list[int] = a_bass[:point] + b_bass[point:]
-    return Arrangement(ChordProgression(child_chords), BassLine(child_bass))
-
-# Uniform crossover
 
 
 def uniform_crossover(parentA: Arrangement, parentB: Arrangement):
@@ -76,38 +61,44 @@ def uniform_crossover(parentA: Arrangement, parentB: Arrangement):
     return children
 
 
-def mutate(parent: Arrangement):
-    # Where we are putting mutations in before return - Progression and bass notes
+def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
     mutated_chords = []
     mutated_notes = []
 
     for chord, note in zip(parent.progression.chords, parent.bassline.notes):
-        mutation_range = random.randint(1, 4)
-        # Chord stuff
-        if random.random() < MUTATION_RATE:
-            if chord is not None:
-                # Ensuring it does not go past valid value
-                mutated_chord = Chord(
-                    notes=[(n + mutation_range) % 13 for n in chord.notes])
-                mutated_chords.append(mutated_chord)
-            else:
-                mutated_chords.append(None)
+
+        step = random.choice([-2, -1, 1, 2])
+
+        if chord is not None and random.random() < mutation_rate:
+
+            new_root = (chord.root + step) % OCTAVE_NOTE_COUNT
+
+            new_quality, new_seventh = random.choice(
+                ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE)
+
+            mutated_chords.append(
+                Chord(
+                    root=new_root,
+                    quality=new_quality,
+                    seventhType=new_seventh,
+                    remainders=set()
+                )
+            )
         else:
             mutated_chords.append(chord)
 
-        # Bass stuff
-        if random.random() < MUTATION_RATE:
-            if note is not None:
-                # Ensuring it does not go past valid value
-                mutated_notes.append((note + mutation_range) % 13)
-            else:
-                mutated_notes.append(None)
+        if note is not None and random.random() < mutation_rate:
+
+            bass_step = random.choice([-1, 1, 2])
+
+            mutated_notes.append((note + bass_step) % OCTAVE_NOTE_COUNT)
         else:
             mutated_notes.append(note)
 
-    mutated_arrangement = Arrangement(progression=ChordProgression(
-        chords=mutated_chords), bassline=BassLine(notes=mutated_notes))
-    return mutated_arrangement
+    return Arrangement(
+        progression=ChordProgression(chords=mutated_chords),
+        bassline=BassLine(notes=mutated_notes)
+    )
 
 
 def tournament(participants):
@@ -117,57 +108,55 @@ def tournament(participants):
     return winners[0], winners[1]
 
 
-population: Arrangement = load_pickle(PROCESSED_DIR/ARRANGEMENT_PICKLE)
+population: list[Arrangement] = load_pickle(PROCESSED_DIR/ARRANGEMENT_PICKLE)
 
 # Append the new chords to the population
 for item in population:
     item.progression.chords = chordList.progression.get_chords() + \
         item.progression.get_chords()
     item.bassline.notes = chordList.bassline.get_notes() + item.bassline.get_notes()
+    item.transpose(transposition_factor)
 
 
 markov = load_pickle(PROCESSED_DIR / f"order2_{MARKOV_PICKLE_SUFFIX}")
 
 for i in range(GENERATIONS):
-    new_population = []
-    rejects = []
-
-    # We need to call the eval fitness function to calculate
-    # the fitness functions for all the members
     for individual in population:
         individual.evaluate_fitness([markov])
 
-    median_fitness = statistics.median(
-        [population.fitness for population in population])
-    highest_fitness = max([population.fitness for population in population])
+    current_fitnesses = [p.fitness for p in population]
+    median_fitness = statistics.median(current_fitnesses)
+    highest_fitness = max(current_fitnesses)
+
+    print(f"Generation {i}")
     print(f"Median fitness {median_fitness}")
     print(f"Highest fitness {highest_fitness}")
-    best = max(population, key=lambda p: p.fitness)
-    print(best)
 
-    # Select parents to crossover / mutate tournament style
-    # trying groups of 8 at first
+    best_overall = max(population, key=lambda p: p.fitness)
+    new_population = [copy.deepcopy(best_overall)]
 
     random.shuffle(population)
+    rejects = []
+
     for j in range(0, len(population), 8):
+        if len(new_population) >= POPULATION_SIZE:
+            break
         competitors = population[j:j+8]
         parent1, parent2 = tournament(competitors)
 
         if parent1 is None or parent2 is None:
             continue
 
-        new_population.append(parent1)
-        new_population.append(parent2)
-
         children = uniform_crossover(parent1, parent2)
-        # children = [mutate(child) if random.random() <
-        #             0.95 else child for child in children]
-        new_population.extend(children)
+        for child in children:
+            if len(new_population) < POPULATION_SIZE:
+                new_population.append(mutate(child))
 
-        competitors.remove(parent1)
-        competitors.remove(parent2)
-        rejects.extend(competitors)
+        losers = [c for c in competitors if c not in (parent1, parent2)]
+        rejects.extend(losers)
 
-    new_population.extend(rejects[:POPULATION_SIZE-len(new_population)])
+    if len(new_population) < POPULATION_SIZE:
+        fill_count = POPULATION_SIZE - len(new_population)
+        new_population.extend(rejects[:fill_count])
+
     population = new_population
-    print(f"Generation {i}")

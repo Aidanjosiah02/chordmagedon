@@ -1,4 +1,5 @@
 from enum import Enum
+from itertools import product
 from pathlib import Path
 from re import compile
 
@@ -30,6 +31,12 @@ EXCLUSIONS = {
     (Quality.SUS2, SeventhType.DIMINISHED),
     (Quality.SUS4, SeventhType.DIMINISHED),
 }
+ALL_PAIRS = list(product(Quality, SeventhType))
+
+ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE = [
+    (q, s) for (q, s) in ALL_PAIRS
+    if (q, s) not in EXCLUSIONS
+]
 
 NOTE_MAP = {'C': 0, 'Cs': 1, 'Db': 1, 'D': 2, 'Ds': 3, 'Eb': 3, 'E': 4, 'F': 5, 'Fs': 6, 'Gb': 6, 'G': 7, 'Gs': 8, 'Ab': 8, 'A': 9, 'As': 10, 'Bb': 10, 'B': 11}
 
@@ -99,6 +106,24 @@ BASE_CHORD_WEIGHT = 2
 SCALE_MASK = [7, 0, 5, 0, 5, 5, 0, 6, 0, 7, 0, 5]
 
 OCTAVE_NOTE_COUNT = 12
+
+
+RESOLUTION_SCORE_TABLE = {
+    (q1, q2): 50  # default score
+    for q1, q2 in product(Quality, repeat=2)
+}
+
+# Punish diminished
+for q1 in Quality:
+    RESOLUTION_SCORE_TABLE[(q1, Quality.DIMINISHED)] = 20
+
+# reward majors and minors
+RESOLUTION_SCORE_TABLE[(Quality.MAJOR, Quality.MAJOR)] = 100
+RESOLUTION_SCORE_TABLE[(Quality.DIMINISHED, Quality.MAJOR)] = 90
+RESOLUTION_SCORE_TABLE[(Quality.SUS2, Quality.MAJOR)] = 80
+RESOLUTION_SCORE_TABLE[(Quality.SUS4, Quality.MAJOR)] = 80
+RESOLUTION_SCORE_TABLE[(Quality.MINOR, Quality.MAJOR)] = 70
+RESOLUTION_SCORE_TABLE[(Quality.AUGMENTED, Quality.MINOR)] = 60
 
 # SCALE_INVALID_NOTES = {
 #     "STANDARD": {1, 3, 6, 8, 10},
