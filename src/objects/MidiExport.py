@@ -24,6 +24,7 @@ def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat
     note_duration = ticks_per_beat * 2
 
     # chord stuff
+<<<<<<< Updated upstream
     # is chord right format - Use translation function
     notes = translate_midi_chord(arrangement.progression.chords)
     # starts notes
@@ -43,6 +44,32 @@ def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat
     for i, n in enumerate(notes):
         time_change = note_duration if i == 0 else 0
         bass_track.append(mido.Message('note_off', note=int(n), velocity = 0, time = time_change))
+=======
+    for chord in arrangement.progression.chords:
+        if chord is None:
+            chord_track.append(mido.Message('note_on', note=0, velocity=0, time=note_duration))
+            continue
+        midi_notes = translate_midi_chord(chord)
+
+        step = note_duration // len(midi_notes)
+        
+        for i, note in enumerate(midi_notes):
+            # turn on note, turn off note, then move onto next. NOT a block of chords.
+            # turn on notes
+            chord_track.append(mido.Message('note_on', note=int(note), velocity=velocity, time=0))
+            # turn off notes 
+            chord_track.append(mido.Message('note_off', note=int(note), velocity=0, time=step))
+    # bass stuff
+    for note in arrangement.bassline.notes:
+        if note is None:
+            bass_track.append(mido.Message('note_on', note = 0, velocity = 0, time=note_duration))
+            continue
+        midi_note = translate_midi_bass(note)
+        #turn on and off
+        bass_track.append(mido.Message('note_on', note=int(midi_note), velocity=velocity, time=0))
+        bass_track.append(mido.Message('note_off', note=int(midi_note), velocity = 0, time=note_duration))
+    
+>>>>>>> Stashed changes
     # save file
     file.save('song.mid')
     print("Song finished!")
