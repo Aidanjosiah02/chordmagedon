@@ -34,12 +34,15 @@ def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat
             chord_track.append(mido.Message('note_on', note=0, velocity=0, time=note_duration))
             continue
         midi_notes = translate_midi_chord(chord)
-        for note in midi_notes:
+
+        step = note_duration // len(midi_notes)
+        
+        for i, note in enumerate(midi_notes):
+            # turn on note, turn off note, then move onto next. NOT a block of chords.
             # turn on notes
             chord_track.append(mido.Message('note_on', note=int(note), velocity=velocity, time=0))
-        for i, note in enumerate(midi_notes):
             # turn off notes 
-            chord_track.append(mido.Message('note_off', note=int(note), velocity=0, time=note_duration if i == 0 else 0))
+            chord_track.append(mido.Message('note_off', note=int(note), velocity=0, time=step))
     # bass stuff
     for note in arrangement.bassline.notes:
         if note is None:
