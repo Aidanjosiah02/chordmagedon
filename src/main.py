@@ -28,7 +28,7 @@ def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
         if chord is None or random.random() > mutation_rate:
             mutated_chords.append(chord)
         else: 
-            new_root = (chord.root + random.choice([-1, 1])) % OCTAVE_NOTE_COUNT
+            new_root = (chord.root + random.choice([-7, 7])) % OCTAVE_NOTE_COUNT
             if random.random() < 0.2:
                 new_quality, new_seventh = random.choice(ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE)
             else:
@@ -39,7 +39,7 @@ def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
         if bass_note is None or random.random() > mutation_rate:
             mutated_notes.append(bass_note)
         else:
-            mutated_notes.append((bass_note + random.choice([-1, 1])) % OCTAVE_NOTE_COUNT)
+            mutated_notes.append((bass_note + random.choice([-7, 7])) % OCTAVE_NOTE_COUNT)
             
     return Arrangement(progression = ChordProgression(mutated_chords), bassline = BassLine(mutated_notes))
 
