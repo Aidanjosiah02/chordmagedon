@@ -71,39 +71,7 @@ def tournament_selection(population: list[Arrangement], selection_count: int = 6
 
 
 
-def get_user_chords(root: int):
-    progression_length = int(input("Please give the desired chord progression length (ex. 8): "))
-    user_progression: MixedProgression = MixedProgression([], root)
-    user_progression_chords = user_progression.chords
-    exit: bool = False
-    iteration = 0
-    while not exit and iteration < progression_length:
-        iteration += 1
-        print()
-        print(NOTE_MAP)
-        chord_root = input(f"Please input the note number value for chord {iteration} ('q' to finish, 's' to skip): ")
-        if (chord_root == 'q'):
-            break
-        if (chord_root == 's'):
-            user_progression_chords.append(None)
-            continue
-        print()
-        print(Quality.to_string())
-        chord_quality = input(f"Please input the chord quality for chord {iteration} ('q' to finish): ")
-        if (chord_quality == 'q'):
-            break
-        print()
-        print(SeventhType.to_string())
-        chord_seventh = input(f"Please input the 7th type for chord {iteration} ('q' to finish): ")
-        if (chord_seventh == 'q'):
-            break
-        user_progression_chords.append(Chord(int(chord_root), Quality(int(chord_quality)), SeventhType(int(chord_seventh))))
-    
-    padding = progression_length - len(user_progression_chords)
-    if padding > 0:
-        user_progression_chords.extend([None] * padding)
 
-    return user_progression
 
 
 
@@ -232,6 +200,43 @@ def merge_user_chords_with_arrangements(arrangements: list[Arrangement], user_ch
     return mixed_progressions
 
 
+
+def get_user_chords(root: int):
+    progression_length = int(input("Please give the desired chord progression length (ex. 8): "))
+    user_progression: MixedProgression = MixedProgression([], root)
+    user_progression_chords = user_progression.chords
+    exit: bool = False
+    iteration = 0
+    while not exit and iteration < progression_length:
+        iteration += 1
+        print()
+        print(NOTE_MAP)
+        chord_root = input(f"Please input the note number value for chord {iteration} ('q' to finish, 's' to skip): ")
+        if (chord_root == 'q'):
+            break
+        if (chord_root == 's'):
+            user_progression_chords.append(None)
+            continue
+        print()
+        print(Quality.to_string())
+        chord_quality = input(f"Please input the chord quality for chord {iteration} ('q' to finish): ")
+        if (chord_quality == 'q'):
+            break
+        print()
+        print(SeventhType.to_string())
+        chord_seventh = input(f"Please input the 7th type for chord {iteration} ('q' to finish): ")
+        if (chord_seventh == 'q'):
+            break
+        user_progression_chords.append(Chord(int(chord_root), Quality(int(chord_quality)), SeventhType(int(chord_seventh))))
+    
+    padding = progression_length - len(user_progression_chords)
+    if padding > 0:
+        user_progression_chords.extend([None] * padding)
+
+    return user_progression
+
+
+
 def init_population(markovs: list[Markov], existing_arrangements: list[Arrangement], max_arrangements: int):
     print()
     print(NOTE_MAP)
@@ -261,6 +266,9 @@ def main():
         load_pickle(PROCESSED_DIR / f"order3_{MARKOV_PICKLE_SUFFIX}")
     ] # type: ignore
     existing_arrangements: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE) # type: ignore
+    
+    # init_population is where useer input is taken.
+    # get_user_chords is used by init_population for chord inputs.
     arrangements: list[Arrangement] = init_population(markovs, existing_arrangements, POPULATION_SIZE)
     print(arrangements)
     
