@@ -1,18 +1,25 @@
 from dataclasses import dataclass
-import random
 from src.objects.Markov import Markov
 from src.constants import CHORD_TRANSITION_INFLUENCE, OCTAVE_NOTE_COUNT, SCALE_MASK
 from src.objects.Chord import Chord
 from src.types import ChordTuple
 from src.constants import RESOLUTION_SCORE_TABLE
-import math
-
+from src.objects.BassLine import BassLine
 
 @dataclass(slots=True)
 class ChordProgression:
     chords: list[Chord]
     root: int = 0
-    fitness: float = 0
+    fitness: float = 0.0
+
+    def __len__(self) -> int:
+        return len(self.chords)
+    
+    def __getitem__(self, index: int) -> Chord:
+        return self.chords[index]
+    
+    def __setitem__(self, key: int, value: Chord) -> None:
+        self.chords[key] = value
 
     def evaluate_fitness(self, markovs: list[Markov], starting_chords: list[Chord]) -> float:
         if not self.chords:
@@ -28,9 +35,7 @@ class ChordProgression:
         for index in range(num_chords):
             score = 0.0
             for markov in markovs:
-                score += markov.get_score(chord_tuples,
-                                          index, CHORD_TRANSITION_INFLUENCE)
-            # Average score from different Markov chain orders
+                score += markov.get_score(chord_tuples, index, CHORD_TRANSITION_INFLUENCE)
             total_progression_score += (score / num_markovs)
         fitness = (total_progression_score / num_chords)
 
@@ -52,7 +57,7 @@ class ChordProgression:
 
     def get_phrasing_average_score(self):
         phrase_lengths = [4, 5]
-        scores = []
+        scores: list[float] = []
 
         for length in phrase_lengths:
             score = self.evaluate_phrase_of_length(length)
@@ -75,16 +80,14 @@ class ChordProgression:
             phrase_b = self.chords[i: i + length]
 
             if len(phrase_a) == len(phrase_b):
-                matches = sum(1 for a, b in zip(phrase_a, phrase_b)
-                              if a.quality == b.quality)
+                matches = sum(1 for a, b in zip(phrase_a, phrase_b) if a.quality == b.quality)
                 repetition_penalty += (matches / length) * 5.0
 
         if transitions == 0:
             return 0.0
 
-        final_score = ((total_score / transitions) -
-                       (repetition_penalty / transitions))
-        return max(0.0, final_score / 100.0)
+        final_score = ((total_score - repetition_penalty) / transitions)
+        return max(0.0, (final_score / 100.0))
 
     def to_tuples(self) -> list[ChordTuple]:
         return [chord.to_tuple() for chord in self.chords]
@@ -140,8 +143,14 @@ class ChordProgression:
         unique_chords = {(c.root, c.quality, c.seventhType)
                          for c in self.chords}
         return 1 - (len(unique_chords) / len(self.chords))
+    
+    def generate_baseline(self) -> BassLine:
+        bass_notes: list[int] = []
+        for chord in self.chords:
+            bass_notes.append(chord.root)
+        return BassLine(bass_notes, self.root)
 
-    def prefix_penalty(self, starting_chords):
+    def prefix_penalty(self, starting_chords: list[Chord]) -> float:
         penalty = 0.0
         length = min(len(starting_chords), len(self.chords))
 

@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from src.constants import BASE_CHORD_WEIGHT, EXCLUSIONS, NOTE_POSITIONS, OCTAVE_NOTE_COUNT, POSITION_WEIGHTS, Quality, SeventhType
+from src.types import ChordTuple
 
 @dataclass(slots=True)
 class Chord:
     root: int
     quality: Quality
-    seventhType: SeventhType
-    remainders: str
+    seventhType: SeventhType = SeventhType.NONE
+    remainders: str = ""
 
     def __post_init__(self):
         self._validate_root()
@@ -36,5 +37,5 @@ class Chord:
     def transpose(self, steps: int) -> None:
         self.root = (self.root + steps) % OCTAVE_NOTE_COUNT
         
-    def to_tuple(self) -> tuple[int, int, int]:
+    def to_tuple(self) -> ChordTuple:
         return (self.root, self.quality.value, self.seventhType.value)

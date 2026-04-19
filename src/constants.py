@@ -12,11 +12,31 @@ class Quality(Enum):
     AUGMENTED = 5
     DIMINISHED = 6
 
+    @classmethod
+    def to_string(cls):
+        all_members: list[str] = []
+        for member in cls:
+            all_members.append(f"{member.name}: {member.value}")
+        return "\n".join(all_members)
+    
+    def __str__(self):
+        return self.to_string()
+
 class SeventhType(Enum):
     NONE = 0
     DOMINANT = 1
     MAJOR = 2
     DIMINISHED = 3
+
+    @classmethod
+    def to_string(cls):
+        all_members: list[str] = []
+        for member in cls:
+            all_members.append(f"{member.name}: {member.value}")
+        return "\n".join(all_members)
+    
+    def __str__(self):
+        return self.to_string()
 
 class Part(Enum):
     CHORDS = 0
@@ -85,8 +105,8 @@ MARKOV_PICKLE_SUFFIX = "markov_chords.pkl"
 
 CHORD_TRANSITION_INFLUENCE = 0.5
 
-GENERATIONS = 1000
-POPULATION_SIZE = 30000
+GENERATIONS = 64
+POPULATION_SIZE = 16384
 MUTATION_RATE = 0.15
 ELITE_RATIO = 0.2
 

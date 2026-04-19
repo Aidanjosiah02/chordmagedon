@@ -1,159 +1,394 @@
 import statistics
 import copy
-import numpy as np
 import random
+from typing import cast
 
+from src.objects.MixedProgression import MixedProgression
+from src.objects.Markov import Markov
 from src.objects.Chord import Chord
 from src.utils.io_handler import load_pickle
 from src.constants import (
     ARRANGEMENT_PICKLE, GENERATIONS, PROCESSED_DIR, MARKOV_PICKLE_SUFFIX, ELITE_RATIO, 
-    MUTATION_RATE, POPULATION_SIZE, NOTE_MAP, OCTAVE_NOTE_COUNT, ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE, 
+    MUTATION_RATE, POPULATION_SIZE, NOTE_MAP, OCTAVE_NOTE_COUNT, ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE, Quality, SeventhType, 
 )
 from src.objects.Arrangement import Arrangement
 from src.objects.ChordProgression import ChordProgression
-from src.objects.Bassline import BassLine
+from src.objects.BassLine import BassLine
 from src.widgets.CompositionKeySelection import CompositionKeySelection
 from src.widgets.ChordsInput import ChordsInput
 from src.utils.parser import parse_arrangements
+from src.types import Key, ChordTuple
 
-keySelection = CompositionKeySelection()
-key = keySelection.run()
-
-if key is None:
-    print("No key Selected")
-    exit()
-
-transposition_factor = -NOTE_MAP.get(key, 0)
-
-chordsInput = ChordsInput()
-raw_input = chordsInput.run()
-chords_list = [item.strip() for item in raw_input.split(',')]
-spaced_chords = " ".join(chords_list)
-
-chordList: Arrangement = parse_arrangements([spaced_chords])[0]
 
 def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
-    mutated_chords = []
-    mutated_notes = []
+    mutated_chords: list[Chord] = []
+    mutated_notes: list[int] = []
 
-    for chord, note in zip(parent.progression.chords, parent.bassline.notes):
-
-        if chord is not None and random.random() < mutation_rate:
+    for chord, bass_note in zip(parent.progression.chords, parent.bassline.notes):
+        if chord is None or random.random() > mutation_rate:
+            mutated_chords.append(chord)
+        else: 
             new_root = (chord.root + random.choice([-1, 1])) % OCTAVE_NOTE_COUNT
-
             if random.random() < 0.2:
                 new_quality, new_seventh = random.choice(ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE)
             else:
-                new_quality, new_seventh = chord.quality, chord.seventhType
+                new_quality = chord.quality
+                new_seventh = chord.seventhType
+            mutated_chords.append(Chord(new_root, new_quality, new_seventh))
 
-            mutated_chords.append(
-                Chord(root=new_root, quality=new_quality, seventhType=new_seventh, remainders=set())
-            )
+        if bass_note is None or random.random() > mutation_rate:
+            mutated_notes.append(bass_note)
         else:
-            mutated_chords.append(chord)
+            mutated_notes.append((bass_note + random.choice([-1, 1])) % OCTAVE_NOTE_COUNT)
+            
+    return Arrangement(progression = ChordProgression(mutated_chords), bassline = BassLine(mutated_notes))
 
-        if note is not None and random.random() < mutation_rate:
-            mutated_notes.append((note + random.choice([-1, 1])) % OCTAVE_NOTE_COUNT)
-        else:
-            mutated_notes.append(note)
 
-    return Arrangement(
-        progression=ChordProgression(chords=mutated_chords),
-        bassline=BassLine(notes=mutated_notes)
-    )
 
-def uniform_crossover(parentA: Arrangement, parentB: Arrangement):
-    children = []
+def uniform_crossover(parentA: Arrangement, parentB: Arrangement) -> list[Arrangement]:
+    children: list[Arrangement] = []
     for _ in range(2):
-        progression = []
-        bassline = []
-        for i, (a, b) in enumerate(zip(parentA.progression.chords, parentB.progression.chords)):
+        progression: list[Chord] = []
+        bassline: list[int] = []
+        for index, (a, b) in enumerate(zip(parentA.progression.chords, parentB.progression.chords)):
             if random.random() < 0.5:
                 progression.append(a)
-                bassline.append(parentA.bassline.notes[i])
+                bassline.append(parentA.bassline.notes[index])
             else:
                 progression.append(b)
-                bassline.append(parentB.bassline.notes[i])
+                bassline.append(parentB.bassline.notes[index])
 
-        children.append(
-            Arrangement(
-                progression=ChordProgression(chords=progression),
-                bassline=BassLine(notes=bassline)
-            )
-        )
+        children.append(Arrangement(progression = ChordProgression(progression), bassline = BassLine(bassline)))
     return children
 
 
-def tournament_selection(population, k=5):
-    competitors = random.sample(population, k)
-    return max(competitors, key=lambda p: p.fitness)
+def tournament_selection(population: list[Arrangement], selection_count: int = 6):
+    competitors = random.sample(population, selection_count)
+    return max(competitors, key=lambda arrangement: arrangement.fitness)
 
 
-population: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE)
-
-unique_signatures = set()
-unique_population = []
-
-for item in population:
-    sig = tuple((c.root, c.quality, c.seventhType) for c in item.progression.chords)
-    if sig not in unique_signatures:
-        unique_signatures.add(sig)
-        unique_population.append(item)
-
-population = unique_population
-
-for item in population:
-    item.progression.chords = chordList.progression.get_chords() + item.progression.get_chords()
-    item.bassline.notes = chordList.bassline.get_notes() + item.bassline.get_notes()
-    item.transpose(transposition_factor)
-
-markov = load_pickle(PROCESSED_DIR / f"order2_{MARKOV_PICKLE_SUFFIX}")
 
 
-for generation in range(GENERATIONS):
 
-    for individual in population:
-        individual.evaluate_fitness([markov], chordList.progression.get_chords())
 
-    fitnesses = [p.fitness for p in population]
+def get_user_chords(root: int):
+    progression_length = int(input("Please give the desired chord progression length (ex. 8): "))
+    user_progression: MixedProgression = MixedProgression([], root)
+    user_progression_chords = user_progression.chords
+    exit: bool = False
+    iteration = 0
+    while not exit and iteration < progression_length:
+        iteration += 1
+        print()
+        print(NOTE_MAP)
+        chord_root = input(f"Please input the note number value for chord {iteration} ('q' to finish, 's' to skip): ")
+        if (chord_root == 'q'):
+            break
+        if (chord_root == 's'):
+            user_progression_chords.append(None)
+            continue
+        print()
+        print(Quality.to_string())
+        chord_quality = input(f"Please input the chord quality for chord {iteration} ('q' to finish): ")
+        if (chord_quality == 'q'):
+            break
+        print()
+        print(SeventhType.to_string())
+        chord_seventh = input(f"Please input the 7th type for chord {iteration} ('q' to finish): ")
+        if (chord_seventh == 'q'):
+            break
+        user_progression_chords.append(Chord(int(chord_root), Quality(int(chord_quality)), SeventhType(int(chord_seventh))))
+    
+    padding = progression_length - len(user_progression_chords)
+    if padding > 0:
+        user_progression_chords.extend([None] * padding)
 
-    median_fitness = statistics.median(fitnesses)
-    best = max(population, key=lambda p: p.fitness)
+    return user_progression
 
-    print(f"\nGeneration {generation}")
-    print(f"Median fitness: {median_fitness:.4f}")
-    print(f"Best fitness:   {best.fitness:.4f}")
 
-    elite_count = max(1, int(ELITE_RATIO * POPULATION_SIZE))
-    elites = sorted(population, key=lambda p: p.fitness, reverse=True)[:elite_count]
 
-    new_population = [copy.deepcopy(e) for e in elites]
 
-    while len(new_population) < POPULATION_SIZE:
+def get_best_next_chord(progression: list[Chord | None], index: int, markovs: list[Markov]) -> ChordTuple | None:
+    progression_tuples = [chord.to_tuple() if chord else None for chord in progression]
+    for markov in markovs:
+        # if we don't have enough history for this Markov's order, try the next lower-order markov.
+        if index < markov.order:
+            continue
+        context_start = index - markov.order
+        context = tuple(progression_tuples[context_start : index])
+        if None in context:
+            continue
+        transitions = markov.get_entry_by_key(context) # type: ignore
+        if transitions:
+            # https://www.geeksforgeeks.org/python/python-get-key-with-maximum-value-in-dictionary/
+            # Returning here since a higher-order markov that matches is best.
+            return max(transitions, key=transitions.get) # type: ignore
+    return None # If no matches exist.
 
-        parent1 = tournament_selection(population)
-        parent2 = tournament_selection(population)
+# def find_bridge_chords(markov_order_2: Markov, chord_before: Chord, chord_after: Chord):
+#     matches: dict[ChordTuple, int] = {} 
 
-        children = uniform_crossover(parent1, parent2)
+#     before_tuple = chord_before.to_tuple()
+#     after_tuple = chord_after.to_tuple()
 
-        for child in children:
-            if len(new_population) >= POPULATION_SIZE:
-                break
+#     for key, targets in markov_order_2.chain.items():
+#         (chord1, chord2) = key
+#         if chord1 == before_tuple:
+#             if after_tuple in targets:
+#                 matches[chord2] = targets[after_tuple]
+                
+#     return matches
 
-            adaptive_mutation = MUTATION_RATE
-            if child.fitness < median_fitness:
-                adaptive_mutation *= 1.2
 
-            mutated_child = mutate(child, mutation_rate=adaptive_mutation)
+def find_bridge_chords2(markov: Markov, progression: list[Chord | None], index: int, chord_after: Chord):
+    matches: dict[ChordTuple, int] = {}
+    after_tuple = chord_after.to_tuple()
+    
+    # Subtract 1 because one slot in the key is the missing chord X
+    history_needed = markov.order - 1
+    if index < history_needed:
+        return matches
 
-            new_population.append(mutated_child)
+    # Get context leading up to the gap
+    context_start = index - history_needed
+    past_context = [chord.to_tuple() for chord in progression[context_start:index]]
+    
+    for key, targets in markov.chain.items():
 
-    population = new_population
+        if list(key[:history_needed]) == past_context:
+            if after_tuple in targets:
+                chord_x = key[-1]
+                matches[chord_x] = targets[after_tuple]
+                
+    return matches
 
-best = max(population, key=lambda p: p.fitness)
+def fill_progression_gaps(mixed_progression: MixedProgression, markovs: list[Markov]) -> ChordProgression:
+    tonic: Chord
+    first_chord = mixed_progression[0]
+    if first_chord:
+        tonic = first_chord
+    else: 
+        tonic = Chord(0, Quality(0), SeventhType(0))
+    
+    filled_chords = list(mixed_progression.get_chords()) + [tonic] # Adding the tonic to give it an end goal
+    markovs_sorted = sorted(markovs, key=lambda m: m.order, reverse=True)
 
-print("\n=== FINAL RESULT ===")
-print(f"Best fitness: {best.fitness}")
+    for index1 in range(len(filled_chords)):
+        if filled_chords[index1] is None:
+            chord_after = None
+            gap_end_index = len(filled_chords) # Default to end of list
+            for index2 in range(index1, len(filled_chords)):
+                if filled_chords[index2] is not None:
+                    chord_after = filled_chords[index2]
+                    gap_end_index = index2
+                    break
+            
+            gap_size = gap_end_index - index1
+            filled = False
+            # Using the bridge if and only if there exists a 1-space gap.
+            if gap_size == 1 and chord_after:
+                for markov in markovs_sorted:
+                    matches = find_bridge_chords2(markov, filled_chords, index1, chord_after)
+                    if matches:
+                        best_bridge: ChordTuple = max(matches, key=matches.get) # type: ignore
+                        filled_chords[index1] = Chord(best_bridge[0], Quality(best_bridge[1]), SeventhType(best_bridge[2])) # type: ignore
+                        filled = True
+                        break
+            
+            if not filled:
+                # Get the best next chord from our Markovs
+                next_chord_tuple = get_best_next_chord(filled_chords, index1, markovs_sorted)
+                if next_chord_tuple:
+                    filled_chords[index1] = Chord(next_chord_tuple[0], Quality(next_chord_tuple[1]), SeventhType(next_chord_tuple[2]))
+                elif index1 > 0:
+                    filled_chords[index1] = filled_chords[index1-1] # TODO: Change to random rather than previous chord. if none found.
+                else: 
+                    filled_chords[index1] = tonic # TODO: Change to random rather than previous chord. if none found.
 
-for chord in best.progression.chords:
-    print(chord)
+    return ChordProgression(filled_chords[:-1], mixed_progression.get_root()) # Chop off the end to remove the temporary tonic.
+
+
+
+def merge_user_chords_with_arrangements(arrangements: list[Arrangement], user_chords: MixedProgression) -> list[MixedProgression]:
+    user_progression_length = len(user_chords)
+    mixed_progressions: list[MixedProgression] = []
+    for arrangement in arrangements:
+        mixed_progression: MixedProgression = MixedProgression(list(arrangement.get_progression().get_chords()), user_chords.get_root())
+        
+        # extends the stored progression to the length of the user's chord progression.
+        stored_progression_length = len(mixed_progression)
+        if stored_progression_length < user_progression_length:
+            mixed_progression.get_chords().extend([None] * (user_progression_length - stored_progression_length))
+        elif stored_progression_length > user_progression_length:
+            del mixed_progression.get_chords()[user_progression_length:]
+
+        # 2. Overwrite non-None user chords at their appropriate positions
+        for index in range(user_progression_length):
+            user_chord = user_chords[index]
+            if user_chord is not None:
+                mixed_progression[index] = user_chord
+        mixed_progressions.append(mixed_progression)
+                
+    return mixed_progressions
+
+
+def init_population(markovs: list[Markov], existing_arrangements: list[Arrangement], max_arrangements: int):
+    print()
+    print(NOTE_MAP)
+    progression_key = int(input("Please input the note number for the desired chord progression key: "))
+    user_progression: MixedProgression = get_user_chords(progression_key)
+    user_progression.transpose(-progression_key)
+    print(user_progression)
+
+    mixed_progressions = merge_user_chords_with_arrangements(existing_arrangements, user_progression)
+    if len(mixed_progressions) > max_arrangements:
+        mixed_progressions = random.sample(mixed_progressions, max_arrangements)
+
+    arrangements: list[Arrangement] = []
+    for mixed_progression in mixed_progressions:
+        progression: ChordProgression = fill_progression_gaps(mixed_progression, markovs)
+        arrangement = Arrangement(progression, progression.generate_baseline())
+        arrangements.append(arrangement)
+
+    return arrangements
+
+
+
+def main():
+    markovs: list[Markov] = [
+        load_pickle(PROCESSED_DIR / f"order1_{MARKOV_PICKLE_SUFFIX}"),
+        load_pickle(PROCESSED_DIR / f"order2_{MARKOV_PICKLE_SUFFIX}"),
+        load_pickle(PROCESSED_DIR / f"order3_{MARKOV_PICKLE_SUFFIX}")
+    ] # type: ignore
+    existing_arrangements: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE) # type: ignore
+    arrangements: list[Arrangement] = init_population(markovs, existing_arrangements, POPULATION_SIZE)
+    print(arrangements)
+    
+
+    print(f"\nStarting Evolution for {GENERATIONS} generations...")
+    for generation in range(GENERATIONS):
+
+        for arrangement in arrangements:
+            arrangement.evaluate_fitness(markovs, arrangement.get_progression().get_chords())
+
+        fitnesses = [arrangement.get_fitness() for arrangement in arrangements]
+
+        median_fitness = statistics.median(fitnesses)
+        best = max(arrangements, key=lambda arrangement: arrangement.get_fitness())
+
+        print(f"\nGeneration {generation}")
+        print(f"Median fitness: {median_fitness:.4f}")
+        print(f"Best fitness:   {best.fitness:.4f}")
+
+        elite_count = max(1, int(ELITE_RATIO * POPULATION_SIZE))
+        elites = sorted(arrangements, key=lambda arrangement: arrangement.get_fitness(), reverse=True)[:elite_count]
+
+        new_arrangements = [copy.deepcopy(elite) for elite in elites]
+
+        while len(new_arrangements) < POPULATION_SIZE:
+
+            parent1 = tournament_selection(arrangements)
+            parent2 = tournament_selection(arrangements)
+            children = uniform_crossover(parent1, parent2)
+            for child in children:
+                if len(new_arrangements) >= POPULATION_SIZE:
+                    break
+                adaptive_mutation = MUTATION_RATE
+                if child.fitness < median_fitness:
+                    adaptive_mutation *= 1.2
+
+                mutated_child = mutate(child, mutation_rate=adaptive_mutation)
+                new_arrangements.append(mutated_child)
+        arrangements = new_arrangements
+
+    best = max(arrangements, key=lambda p: p.fitness)
+
+    print("\n=== FINAL RESULT ===")
+    print(f"Best fitness: {best.fitness}")
+
+    for chord in best.progression.chords:
+        print(chord)
+
+main()
+
+
+# def main():
+
+#     keySelection = CompositionKeySelection()
+#     key_root: int | None = keySelection.run() # type: ignore
+
+#     if key_root is None:
+#         print("No key Selected")
+#         exit()
+
+#     transposition_factor: int = -key_root # type: ignore
+
+#     chordsInput = ChordsInput()
+#     user_chords: list[Chord | None] = cast(list[Chord | None], chordsInput.run())
+#     print(user_chords)
+
+#     if not user_chords:
+#         exit()
+#     user_bass = [chord.root for chord in user_chords]
+#     chord_list = Arrangement(progression=ChordProgression(user_chords), bassline=BassLine(user_bass))
+
+#     arrangements: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE) # type: ignore
+
+#     unique_keys: set[Key] = set()
+#     unique_arrangements: list[Arrangement] = []
+#     for arrangement in arrangements:
+#         key = tuple(chord.to_tuple() for chord in arrangement.progression.chords)
+#         unique_keys.add(key)
+#         unique_arrangements.append(arrangement)
+
+#     for arrangement in unique_arrangements:
+#         arrangement.progression.chords = chord_list.progression.get_chords() + arrangement.progression.get_chords()
+#         arrangement.bassline.notes = chord_list.bassline.get_notes() + arrangement.bassline.get_notes()
+#         arrangement.transpose(transposition_factor)
+
+
+#     markov: Markov = load_pickle(PROCESSED_DIR / f"order2_{MARKOV_PICKLE_SUFFIX}") # type: ignore
+#     for generation in range(GENERATIONS):
+
+#         for arrangement in arrangements:
+#             arrangement.evaluate_fitness([markov], chord_list.progression.get_chords())
+
+#         fitnesses = [arrangement.get_fitness() for arrangement in arrangements]
+
+#         median_fitness = statistics.median(fitnesses)
+#         best = max(arrangements, key=lambda arrangement: arrangement.fitness)
+
+#         print(f"\nGeneration {generation}")
+#         print(f"Median fitness: {median_fitness:.4f}")
+#         print(f"Best fitness:   {best.fitness:.4f}")
+
+#         elite_count = max(1, int(ELITE_RATIO * POPULATION_SIZE))
+#         elites = sorted(arrangements, key=lambda arrangement: arrangement.get_fitness(), reverse=True)[:elite_count]
+
+#         new_arrangements = [copy.deepcopy(elite) for elite in elites]
+
+#         while len(new_arrangements) < POPULATION_SIZE:
+
+#             parent1 = tournament_selection(arrangements)
+#             parent2 = tournament_selection(arrangements)
+#             children = uniform_crossover(parent1, parent2)
+#             for child in children:
+#                 if len(new_arrangements) >= POPULATION_SIZE:
+#                     break
+#                 adaptive_mutation = MUTATION_RATE
+#                 if child.fitness < median_fitness:
+#                     adaptive_mutation *= 1.2
+
+#                 mutated_child = mutate(child, mutation_rate=adaptive_mutation)
+#                 new_arrangements.append(mutated_child)
+#         arrangements = new_arrangements
+
+#     best = max(arrangements, key=lambda p: p.fitness)
+
+#     print("\n=== FINAL RESULT ===")
+#     print(f"Best fitness: {best.fitness}")
+
+#     for chord in best.progression.chords:
+#         print(chord)
+
+# main()

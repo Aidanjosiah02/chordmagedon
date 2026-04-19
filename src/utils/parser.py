@@ -1,6 +1,6 @@
 import re
 from src.objects.ChordProgression import ChordProgression
-from src.objects.Bassline import BassLine
+from src.objects.BassLine import BassLine
 from src.objects.Arrangement import Arrangement
 from src.objects.Chord import Chord
 from src.constants import CHORD_REGEX, NOTE_MAP, QUALITY_ENUM_MAP, Quality, SeventhType
@@ -81,7 +81,6 @@ def parse_arrangements(slash_arrangement_strings: list[str]) -> list[Arrangement
             bassline=bassline
         )
 
-        arrangement.validate()
         arrangement.normalize()
         arrangements.append(arrangement)
 

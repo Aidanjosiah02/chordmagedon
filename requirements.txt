@@ -1,6 +1,6 @@
 pandas
-flask
 matplotlib
 pretty_midi
 numpy
 mido
+textual

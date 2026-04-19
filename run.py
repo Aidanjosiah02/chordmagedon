@@ -53,11 +53,11 @@ def main():
         run_markov_pipeline(arrangements, order=4),
     ]
 
-    # Fitness evaluation
-    print("\nEvaluating arrangement fitness...")
-    for arrangement in arrangements:
-        arrangement.evaluate_fitness(markovs)
-        # print(str(arrangement) + " = " + str(fitness))
+    # # Fitness evaluation
+    # print("\nEvaluating arrangement fitness...")
+    # for arrangement in arrangements:
+    #     arrangement.evaluate_fitness(markovs)
+    #     print(str(arrangement) + " = " + str(fitness))
 
     # cliche = max(arrangements, key=lambda a: a.fitness)
     # print(f"\nMost 'Cliche' Arrangement (Fitness: {cliche.fitness}):")
