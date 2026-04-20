@@ -1,7 +1,7 @@
 import mido
 from src.objects.Chord import Chord
 from src.utils.io_handler import load_pickle
-from src.constants import ARRANGEMENT_PICKLE, GENERATIONS, PROCESSED_DIR, MARKOV_PICKLE_SUFFIX, MUTATION_RATE, POPULATION_SIZE, NOTE_MAP
+from src.constants import ARRANGEMENT_PICKLE, GENERATIONS, PROCESSED_DIR, MARKOV_PICKLE_SUFFIX, MUTATION_RATE, POPULATION_SIZE, NOTE_MAP, SEVENTH_POSITIONS
 from src.objects.Arrangement import Arrangement 
 from src.objects.ChordProgression import ChordProgression
 from src.objects.BassLine import BassLine
@@ -35,14 +35,22 @@ def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat
             continue
         midi_notes = translate_midi_chord(chord)
 
-        step = note_duration // len(midi_notes)
+        # step = note_duration // len(midi_notes)
         
-        for i, note in enumerate(midi_notes):
-            # turn on note, turn off note, then move onto next. NOT a block of chords.
+        # for i, note in enumerate(midi_notes):
+        #     # turn on note, turn off note, then move onto next. NOT a block of chords.
+        #     # turn on notes
+        #     chord_track.append(mido.Message('note_on', note=int(note), velocity=velocity, time=0))
+        #     # turn off notes 
+        #     chord_track.append(mido.Message('note_off', note=int(note), velocity=0, time=step))
+
+        for note in midi_notes:
             # turn on notes
             chord_track.append(mido.Message('note_on', note=int(note), velocity=velocity, time=0))
+        for i, note in enumerate(midi_notes):
             # turn off notes 
-            chord_track.append(mido.Message('note_off', note=int(note), velocity=0, time=step))
+            chord_track.append(mido.Message('note_off', note=int(note), velocity=0, time=note_duration if i == 0 else 0))
+
     # bass stuff
     for note in arrangement.bassline.notes:
         if note is None:
@@ -58,9 +66,9 @@ def export_midi(arrangement, filename='song.mid', tempo = 500000, ticks_per_beat
     print("Song finished!")
 
 #Turn the output into something compatible with mido export  
-def translate_midi_chord(chord):
+def translate_midi_chord(chord: Chord):
    from src.constants import NOTE_POSITIONS
-   intervals = NOTE_POSITIONS[chord.quality.value]
+   intervals = NOTE_POSITIONS[chord.quality.value] + SEVENTH_POSITIONS[chord.seventhType.value]
    midi_notes = [(chord.root + interval + 48) for interval in intervals]
    return midi_notes
                 

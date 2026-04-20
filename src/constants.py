@@ -120,6 +120,15 @@ NOTE_POSITIONS = {
     Quality.DIMINISHED.value: [0, 3, 6],
 }
 
+SEVENTH_POSITIONS = {
+    SeventhType.NONE.value: [],
+    SeventhType.DOMINANT.value: [10],
+    SeventhType.MAJOR.value: [11],
+    SeventhType.DIMINISHED.value: [9],
+}
+
+
+
 POSITION_WEIGHTS = [5, 0, 2] 
 BASE_CHORD_WEIGHT = 2
 
@@ -144,6 +153,7 @@ RESOLUTION_SCORE_TABLE[(Quality.DIMINISHED, Quality.MAJOR)] = 90
 RESOLUTION_SCORE_TABLE[(Quality.SUS2, Quality.MAJOR)] = 80
 RESOLUTION_SCORE_TABLE[(Quality.SUS4, Quality.MAJOR)] = 80
 RESOLUTION_SCORE_TABLE[(Quality.MINOR, Quality.MAJOR)] = 70
+RESOLUTION_SCORE_TABLE[(Quality.MAJOR, Quality.MINOR)] = 70
 RESOLUTION_SCORE_TABLE[(Quality.AUGMENTED, Quality.MINOR)] = 60
 
 # SCALE_INVALID_NOTES = {
