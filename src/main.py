@@ -3,6 +3,7 @@ import copy
 import random
 from typing import cast
 
+from src.formulas import score_saturator
 from src.objects.MixedProgression import MixedProgression
 from src.objects.Markov import Markov
 from src.objects.Chord import Chord
@@ -25,18 +26,18 @@ def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
     mutated_notes: list[int] = []
 
     for chord, bass_note in zip(parent.progression.chords, parent.bassline.notes):
-        if chord is None or random.random() > mutation_rate:
+        if random.random() > mutation_rate:
             mutated_chords.append(chord)
         else: 
             new_root = (chord.root + random.choice([-7, 7])) % OCTAVE_NOTE_COUNT
-            if random.random() < 0.2:
+            if random.random() < 0.4:
                 new_quality, new_seventh = random.choice(ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE)
             else:
                 new_quality = chord.quality
                 new_seventh = chord.seventhType
             mutated_chords.append(Chord(new_root, new_quality, new_seventh))
 
-        if bass_note is None or random.random() > mutation_rate:
+        if random.random() > mutation_rate:
             mutated_notes.append(bass_note)
         else:
             mutated_notes.append((bass_note + random.choice([-7, 7])) % OCTAVE_NOTE_COUNT)
@@ -88,24 +89,18 @@ def get_best_next_chord(progression: list[Chord | None], index: int, markovs: li
             continue
         transitions = markov.get_entry_by_key(context) # type: ignore
         if transitions:
-            # https://www.geeksforgeeks.org/python/python-get-key-with-maximum-value-in-dictionary/
-            # Returning here since a higher-order markov that matches is best.
-            return max(transitions, key=transitions.get) # type: ignore
+            saturated_transitions: dict[ChordTuple, float] = {}
+            for chord_tuple, count in transitions.items():
+                score = score_saturator(max(transitions.values()), count)
+                saturated_transitions[chord_tuple] = score
+            options = list(saturated_transitions.keys())
+            weights = list(saturated_transitions.values())
+            
+            return random.choices(options, weights=weights, k=1)[0]
+            # # https://www.geeksforgeeks.org/python/python-get-key-with-maximum-value-in-dictionary/
+            # # Returning here since a higher-order markov that matches is best.
+            # return max(transitions, key=transitions.get) # type: ignore
     return None # If no matches exist.
-
-# def find_bridge_chords(markov_order_2: Markov, chord_before: Chord, chord_after: Chord):
-#     matches: dict[ChordTuple, int] = {} 
-
-#     before_tuple = chord_before.to_tuple()
-#     after_tuple = chord_after.to_tuple()
-
-#     for key, targets in markov_order_2.chain.items():
-#         (chord1, chord2) = key
-#         if chord1 == before_tuple:
-#             if after_tuple in targets:
-#                 matches[chord2] = targets[after_tuple]
-                
-#     return matches
 
 
 def find_bridge_chords2(markov: Markov, progression: list[Chord | None], index: int, chord_after: Chord):
@@ -158,8 +153,19 @@ def fill_progression_gaps(mixed_progression: MixedProgression, markovs: list[Mar
                 for markov in markovs_sorted:
                     matches = find_bridge_chords2(markov, filled_chords, index1, chord_after)
                     if matches:
-                        best_bridge: ChordTuple = max(matches, key=matches.get) # type: ignore
-                        filled_chords[index1] = Chord(best_bridge[0], Quality(best_bridge[1]), SeventhType(best_bridge[2])) # type: ignore
+
+                        # Attempt to make less likely but still realistic transitions a chance to occur.
+                        saturated_matches: dict[ChordTuple, float] = {}
+                        for chord, count in matches.items():
+                            score = score_saturator(max(matches.values()), count)
+                            saturated_matches[chord] = score
+                        
+                        # Selecting based on probability
+                        options = list(saturated_matches.keys())
+                        selection_weights = list(saturated_matches.values())
+                        chosen_tuple = random.choices(options, weights=selection_weights, k=1)[0]
+                        filled_chords[index1] = Chord(chosen_tuple[0], Quality(chosen_tuple[1]), SeventhType(chosen_tuple[2]))
+
                         filled = True
                         break
             
@@ -263,7 +269,8 @@ def main():
     markovs: list[Markov] = [
         load_pickle(PROCESSED_DIR / f"order1_{MARKOV_PICKLE_SUFFIX}"),
         load_pickle(PROCESSED_DIR / f"order2_{MARKOV_PICKLE_SUFFIX}"),
-        load_pickle(PROCESSED_DIR / f"order3_{MARKOV_PICKLE_SUFFIX}")
+        load_pickle(PROCESSED_DIR / f"order3_{MARKOV_PICKLE_SUFFIX}"),
+        load_pickle(PROCESSED_DIR / f"order4_{MARKOV_PICKLE_SUFFIX}")
     ] # type: ignore
     existing_arrangements: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE) # type: ignore
     
@@ -272,13 +279,23 @@ def main():
     arrangements: list[Arrangement] = init_population(markovs, existing_arrangements, POPULATION_SIZE)
     print(arrangements)
     
+    fitness_cache: dict[int, float] = {}
 
     print(f"\nStarting Evolution for {GENERATIONS} generations...")
     for generation in range(GENERATIONS):
 
+        
         for arrangement in arrangements:
-            arrangement.evaluate_fitness(markovs, arrangement.get_progression().get_chords())
+            arrangement_hash = hash(arrangement)
+            if arrangement_hash in fitness_cache:
+                arrangement.set_fitness(fitness_cache[arrangement_hash])
+            else:
+                fitness = arrangement.evaluate_fitness(markovs, arrangement.get_progression().get_chords())
+                fitness_cache[arrangement_hash] = fitness
 
+        # for arrangement in arrangements:
+        #     arrangement.evaluate_fitness(markovs, arrangement.get_progression().get_chords())
+            
         fitnesses = [arrangement.get_fitness() for arrangement in arrangements]
 
         median_fitness = statistics.median(fitnesses)
@@ -291,6 +308,7 @@ def main():
         elite_count = max(1, int(ELITE_RATIO * POPULATION_SIZE))
         elites = sorted(arrangements, key=lambda arrangement: arrangement.get_fitness(), reverse=True)[:elite_count]
 
+        unique_arrangement_hashes = {hash(elite) for elite in elites} # New to prevent duplicate progressions
         new_arrangements = [copy.deepcopy(elite) for elite in elites]
 
         while len(new_arrangements) < POPULATION_SIZE:
@@ -298,24 +316,39 @@ def main():
             parent1 = tournament_selection(arrangements)
             parent2 = tournament_selection(arrangements)
             children = uniform_crossover(parent1, parent2)
+
             for child in children:
                 if len(new_arrangements) >= POPULATION_SIZE:
                     break
                 adaptive_mutation = MUTATION_RATE
                 if child.fitness < median_fitness:
-                    adaptive_mutation *= 1.2
+                    adaptive_mutation *= 1.0
 
                 mutated_child = mutate(child, mutation_rate=adaptive_mutation)
-                new_arrangements.append(mutated_child)
+
+                # Only add if it's a new unique arrangement for this generation
+                child_hash = hash(mutated_child)
+                if child_hash not in unique_arrangement_hashes:
+                    new_arrangements.append(mutated_child)
+                    unique_arrangement_hashes.add(child_hash)
+
         arrangements = new_arrangements
 
-    best = max(arrangements, key=lambda p: p.fitness)
 
-    print("\n=== FINAL RESULT ===")
-    print(f"Best fitness: {best.fitness}")
 
-    for chord in best.progression.chords:
-        print(chord)
+    final_sorted = sorted(arrangements, key=lambda p: p.fitness, reverse=True)
+    
+    # 2. Take the top 3 (or the whole list if it's smaller than 3)
+    top3_arrangements = final_sorted[:3]
+
+    print("\n=== FINAL RESULTS (TOP 3) ===")
+    for index, arrangement in enumerate(top3_arrangements, 1):
+        print(f"\nRank {index}, with fitness: {arrangement.fitness:.4f}")
+        print("--------------------------------")
+        for chord in arrangement.get_progression().get_chords():
+            print(chord)
+
+
 
 main()
 
