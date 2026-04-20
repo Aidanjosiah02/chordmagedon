@@ -19,6 +19,7 @@ from src.widgets.CompositionKeySelection import CompositionKeySelection
 from src.widgets.ChordsInput import ChordsInput
 from src.utils.parser import parse_arrangements
 from src.types import Key, ChordTuple
+from src.utils.midi_export import export_midi
 
 
 def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
@@ -347,6 +348,9 @@ def main():
         print("--------------------------------")
         for chord in arrangement.get_progression().get_chords():
             print(chord)
+        export_midi(arrangement, f"song_{index}.mid", 500000, 120)
+
+    
 
 
 
