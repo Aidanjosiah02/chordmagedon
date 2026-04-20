@@ -53,7 +53,7 @@ def uniform_crossover(parentA: Arrangement, parentB: Arrangement) -> list[Arrang
         progression: list[Chord] = []
         bassline: list[int] = []
         for index, (a, b) in enumerate(zip(parentA.progression.chords, parentB.progression.chords)):
-            if random.random() < 0.5:
+            if random.random() < 0.4:
                 progression.append(a)
                 bassline.append(parentA.bassline.notes[index])
             else:
@@ -265,8 +265,7 @@ def main():
     markovs: list[Markov] = [
         load_pickle(PROCESSED_DIR / f"order1_{MARKOV_PICKLE_SUFFIX}"),
         load_pickle(PROCESSED_DIR / f"order2_{MARKOV_PICKLE_SUFFIX}"),
-        load_pickle(PROCESSED_DIR / f"order3_{MARKOV_PICKLE_SUFFIX}"),
-        load_pickle(PROCESSED_DIR / f"order4_{MARKOV_PICKLE_SUFFIX}")
+        load_pickle(PROCESSED_DIR / f"order3_{MARKOV_PICKLE_SUFFIX}")
     ] # type: ignore
     existing_arrangements: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE) # type: ignore
     
@@ -353,8 +352,6 @@ def main():
         export_midi(arrangement, f"song_{index}.mid", 500000, 120)
 
     
-
-
 
 main()
 
