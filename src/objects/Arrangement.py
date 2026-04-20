@@ -12,6 +12,13 @@ class Arrangement:
     bassline: BassLine
     fitness: float = 0
 
+    def __hash__(self):
+        return hash((tuple(self.progression.get_chords()), tuple(self.get_bassline().get_notes())))
+
+    def __eq__(self, arrangement2):
+        if not isinstance(arrangement2, Arrangement): return False
+        return self.progression.get_chords() == arrangement2.get_progression().get_chords() and self.bassline.get_notes() == arrangement2.get_bassline().get_notes()
+
     def evaluate_fitness(self, markovs: list[Markov], starting_chords: list[Chord]):
         chord_markovs = [markov for markov in markovs if markov.part == Part.CHORDS]
         # bass_markovs = [markov for markov in markovs if markov.part == Part.BASS]
@@ -20,6 +27,9 @@ class Arrangement:
         # print("bass: ", bass_fitness, ". chord: ", chord_fitness)
         self.fitness = (3/5 * chord_fitness + 2/5 * bass_fitness)
         return self.fitness
+    
+    def set_fitness(self, fitness: float) -> None:
+        self.fitness = fitness
 
     def get_progression(self) -> ChordProgression:
         return self.progression

@@ -9,6 +9,9 @@ class Chord:
     seventhType: SeventhType = SeventhType.NONE
     remainders: str = ""
 
+    def __hash__(self):
+        return hash((self.root, self.quality, self.seventhType))
+
     def __post_init__(self):
         self._validate_root()
         self._validate_chord()

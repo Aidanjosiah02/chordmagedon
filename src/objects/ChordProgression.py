@@ -21,22 +21,30 @@ class ChordProgression:
     def __setitem__(self, key: int, value: Chord) -> None:
         self.chords[key] = value
 
+
+
     def evaluate_fitness(self, markovs: list[Markov], starting_chords: list[Chord]) -> float:
         if not self.chords:
             return 0.0
 
         chord_tuples = self.to_tuples()
         num_chords = len(chord_tuples)
-        num_markovs = len(markovs)
+        markovs_descending = sorted(markovs, key=lambda m: m.order, reverse=True)
 
         total_progression_score = 0.0
-
         # Check similarities to 80s music
         for index in range(num_chords):
-            score = 0.0
-            for markov in markovs:
-                score += markov.get_score(chord_tuples, index, CHORD_TRANSITION_INFLUENCE)
-            total_progression_score += (score / num_markovs)
+            chord_score = 0.0
+            for markov in markovs_descending:
+                score = markov.get_score(chord_tuples, index, CHORD_TRANSITION_INFLUENCE)
+                # A non-zero score means the transition exists in the dataset. Break if found.
+                if score > 0:
+                    chord_score = score
+                    break
+                chord_score -= 0.1
+            if chord_score > 0.0:
+                total_progression_score += chord_score
+
         fitness = (total_progression_score / num_chords)
 
         # Check song structure
