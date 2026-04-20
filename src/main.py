@@ -209,6 +209,7 @@ def merge_user_chords_with_arrangements(arrangements: list[Arrangement], user_ch
 
 
 def get_user_chords(root: int):
+    
     progression_length = int(input("Please give the desired chord progression length (ex. 8): "))
     user_progression: MixedProgression = MixedProgression([], root)
     user_progression_chords = user_progression.chords
@@ -244,14 +245,8 @@ def get_user_chords(root: int):
 
 
 
-def init_population(markovs: list[Markov], existing_arrangements: list[Arrangement], max_arrangements: int):
-    print()
-    print(NOTE_MAP)
-    progression_key = int(input("Please input the note number for the desired chord progression key: "))
-    user_progression: MixedProgression = get_user_chords(progression_key)
-    user_progression.transpose(-progression_key)
-    print(user_progression)
-
+def init_population(markovs: list[Markov], user_progression: MixedProgression, existing_arrangements: list[Arrangement], max_arrangements: int):
+    
     mixed_progressions = merge_user_chords_with_arrangements(existing_arrangements, user_progression)
     if len(mixed_progressions) > max_arrangements:
         mixed_progressions = random.sample(mixed_progressions, max_arrangements)
@@ -275,9 +270,16 @@ def main():
     ] # type: ignore
     existing_arrangements: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE) # type: ignore
     
+    print()
+    print(NOTE_MAP)
+    progression_key = int(input("Please input the note number for the desired chord progression key: "))
+    user_progression: MixedProgression = get_user_chords(progression_key)
+    user_progression.transpose(-progression_key)
+    print(user_progression)
+
     # init_population is where useer input is taken.
     # get_user_chords is used by init_population for chord inputs.
-    arrangements: list[Arrangement] = init_population(markovs, existing_arrangements, POPULATION_SIZE)
+    arrangements: list[Arrangement] = init_population(markovs, user_progression, existing_arrangements, POPULATION_SIZE)
     print(arrangements)
     
     fitness_cache: dict[int, float] = {}
