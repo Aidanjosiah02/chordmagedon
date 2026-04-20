@@ -161,10 +161,14 @@ class ChordProgression:
     def prefix_penalty(self, starting_chords: list[Chord]) -> float:
         penalty = 0.0
         length = min(len(starting_chords), len(self.chords))
+        counter = 0
 
         for i in range(length):
             a = self.chords[i]
             b = starting_chords[i]
+
+            if b is None:
+                continue
 
             if a.root != b.root:
                 penalty += 0.2
@@ -173,5 +177,7 @@ class ChordProgression:
             if a.seventhType != b.seventhType:
                 penalty += 0.05
 
-        return penalty / length if length > 0 else 0.0
+            counter += 1
+
+        return penalty / counter if counter > 0 else 0.0
 

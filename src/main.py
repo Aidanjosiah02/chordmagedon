@@ -293,7 +293,7 @@ def main():
             if arrangement_hash in fitness_cache:
                 arrangement.set_fitness(fitness_cache[arrangement_hash])
             else:
-                fitness = arrangement.evaluate_fitness(markovs, arrangement.get_progression().get_chords())
+                fitness = arrangement.evaluate_fitness(markovs, user_progression.get_chords())
                 fitness_cache[arrangement_hash] = fitness
 
         # for arrangement in arrangements:
