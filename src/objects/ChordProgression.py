@@ -64,7 +64,7 @@ class ChordProgression:
         return self.fitness
 
     def get_phrasing_average_score(self):
-        phrase_lengths = [4, 5]
+        phrase_lengths = [4, 5, 6, 7]
         scores: list[float] = []
 
         for length in phrase_lengths:
