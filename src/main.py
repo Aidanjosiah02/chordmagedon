@@ -23,6 +23,7 @@ from src.utils.midi_export import export_midi
 
 
 def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
+    root = parent.get_progression().get_root()
     mutated_chords: list[Chord] = []
     mutated_notes: list[int] = []
 
@@ -31,7 +32,7 @@ def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
             mutated_chords.append(chord)
         else: 
             new_root = (chord.root + random.choice([-7, 7])) % OCTAVE_NOTE_COUNT
-            if random.random() < 0.4:
+            if random.random() < 0.5:
                 new_quality, new_seventh = random.choice(ALLOWED_PAIRS_OF_QUALITY_AND_SEVENTH_TYPE)
             else:
                 new_quality = chord.quality
@@ -43,24 +44,26 @@ def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
         else:
             mutated_notes.append((bass_note + random.choice([-7, 7])) % OCTAVE_NOTE_COUNT)
             
-    return Arrangement(progression = ChordProgression(mutated_chords), bassline = BassLine(mutated_notes))
+    return Arrangement(progression = ChordProgression(mutated_chords, root), bassline = BassLine(mutated_notes, root))
 
 
 
 def uniform_crossover(parentA: Arrangement, parentB: Arrangement) -> list[Arrangement]:
+    parentA_root = parentA.get_progression().get_root()
     children: list[Arrangement] = []
     for _ in range(2):
         progression: list[Chord] = []
         bassline: list[int] = []
         for index, (a, b) in enumerate(zip(parentA.progression.chords, parentB.progression.chords)):
-            if random.random() < 0.4:
+            
+            if random.random() < 0.5:
                 progression.append(a)
                 bassline.append(parentA.bassline.notes[index])
             else:
                 progression.append(b)
                 bassline.append(parentB.bassline.notes[index])
 
-        children.append(Arrangement(progression = ChordProgression(progression), bassline = BassLine(bassline)))
+        children.append(Arrangement(progression = ChordProgression(progression, parentA_root), bassline = BassLine(bassline, parentA_root)))
     return children
 
 
@@ -303,9 +306,9 @@ def main():
         median_fitness = statistics.median(fitnesses)
         best = max(arrangements, key=lambda arrangement: arrangement.get_fitness())
 
-        print(f"\nGeneration {generation}")
+        print(f"\nGeneration: {generation}")
         print(f"Median fitness: {median_fitness:.4f}")
-        print(f"Best fitness:   {best.fitness:.4f}")
+        print(f"Best fitness: {best.fitness:.4f}")
 
         elite_count = max(1, int(ELITE_RATIO * POPULATION_SIZE))
         elites = sorted(arrangements, key=lambda arrangement: arrangement.get_fitness(), reverse=True)[:elite_count]
@@ -347,6 +350,7 @@ def main():
     for index, arrangement in enumerate(top3_arrangements, 1):
         print(f"\nRank {index}, with fitness: {arrangement.fitness:.4f}")
         print("--------------------------------")
+        arrangement.transpose(arrangement.get_progression().get_root())
         for chord in arrangement.get_progression().get_chords():
             print(chord)
         export_midi(arrangement, f"song_{index}.mid", 500000, 120)
