@@ -19,7 +19,7 @@ from src.widgets.CompositionKeySelection import CompositionKeySelection
 from src.widgets.ChordsInput import ChordsInput
 from src.utils.parser import parse_arrangements
 from src.types import Key, ChordTuple
-from src.utils.midi_export import export_midi
+from src.utils.midi_export import export_midi, translate_midi_chord
 
 
 def mutate(parent: Arrangement, mutation_rate: float = MUTATION_RATE):
@@ -67,15 +67,6 @@ def uniform_crossover(parentA: Arrangement, parentB: Arrangement) -> list[Arrang
 def tournament_selection(population: list[Arrangement], selection_count: int = 6):
     competitors = random.sample(population, selection_count)
     return max(competitors, key=lambda arrangement: arrangement.fitness)
-
-
-
-
-
-
-
-
-
 
 
 def get_best_next_chord(progression: list[Chord | None], index: int, markovs: list[Markov]) -> ChordTuple | None:
@@ -268,18 +259,15 @@ def main():
         load_pickle(PROCESSED_DIR / f"order3_{MARKOV_PICKLE_SUFFIX}")
     ] # type: ignore
     existing_arrangements: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE) # type: ignore
-    
-    print()
-    print(NOTE_MAP)
+    for key, value in NOTE_MAP.items():
+        print(f"{key}: {value}")
     progression_key = int(input("Please input the note number for the desired chord progression key: "))
     user_progression: MixedProgression = get_user_chords(progression_key)
     user_progression.transpose(-progression_key)
-    print(user_progression)
 
     # init_population is where useer input is taken.
     # get_user_chords is used by init_population for chord inputs.
     arrangements: list[Arrangement] = init_population(markovs, user_progression, existing_arrangements, POPULATION_SIZE)
-    print(arrangements)
     
     fitness_cache: dict[int, float] = {}
 
@@ -339,7 +327,7 @@ def main():
 
 
     final_sorted = sorted(arrangements, key=lambda p: p.fitness, reverse=True)
-    
+
     # 2. Take the top 3 (or the whole list if it's smaller than 3)
     top3_arrangements = final_sorted[:3]
 
@@ -348,91 +336,13 @@ def main():
         print(f"\nRank {index}, with fitness: {arrangement.fitness:.4f}")
         print("--------------------------------")
         for chord in arrangement.get_progression().get_chords():
-            print(chord)
+            root = next((k for k, v in NOTE_MAP.items() if v == chord.root), '')
+            quality = next((k for k, v in vars(Quality).items() if v == chord.quality), '')
+            seventhType = next((k for k, v in vars(SeventhType).items() if v == chord.seventhType), '')
+            seventhType = seventhType if seventhType.lower() != 'none'  else  ''  
+            print(f"{root} {quality or ''} {seventhType}".strip(), end=", ")
+        print("")
         export_midi(arrangement, f"song_{index}.mid", 500000, 120)
 
-    
 
 main()
-
-
-# def main():
-
-#     keySelection = CompositionKeySelection()
-#     key_root: int | None = keySelection.run() # type: ignore
-
-#     if key_root is None:
-#         print("No key Selected")
-#         exit()
-
-#     transposition_factor: int = -key_root # type: ignore
-
-#     chordsInput = ChordsInput()
-#     user_chords: list[Chord | None] = cast(list[Chord | None], chordsInput.run())
-#     print(user_chords)
-
-#     if not user_chords:
-#         exit()
-#     user_bass = [chord.root for chord in user_chords]
-#     chord_list = Arrangement(progression=ChordProgression(user_chords), bassline=BassLine(user_bass))
-
-#     arrangements: list[Arrangement] = load_pickle(PROCESSED_DIR / ARRANGEMENT_PICKLE) # type: ignore
-
-#     unique_keys: set[Key] = set()
-#     unique_arrangements: list[Arrangement] = []
-#     for arrangement in arrangements:
-#         key = tuple(chord.to_tuple() for chord in arrangement.progression.chords)
-#         unique_keys.add(key)
-#         unique_arrangements.append(arrangement)
-
-#     for arrangement in unique_arrangements:
-#         arrangement.progression.chords = chord_list.progression.get_chords() + arrangement.progression.get_chords()
-#         arrangement.bassline.notes = chord_list.bassline.get_notes() + arrangement.bassline.get_notes()
-#         arrangement.transpose(transposition_factor)
-
-
-#     markov: Markov = load_pickle(PROCESSED_DIR / f"order2_{MARKOV_PICKLE_SUFFIX}") # type: ignore
-#     for generation in range(GENERATIONS):
-
-#         for arrangement in arrangements:
-#             arrangement.evaluate_fitness([markov], chord_list.progression.get_chords())
-
-#         fitnesses = [arrangement.get_fitness() for arrangement in arrangements]
-
-#         median_fitness = statistics.median(fitnesses)
-#         best = max(arrangements, key=lambda arrangement: arrangement.fitness)
-
-#         print(f"\nGeneration {generation}")
-#         print(f"Median fitness: {median_fitness:.4f}")
-#         print(f"Best fitness:   {best.fitness:.4f}")
-
-#         elite_count = max(1, int(ELITE_RATIO * POPULATION_SIZE))
-#         elites = sorted(arrangements, key=lambda arrangement: arrangement.get_fitness(), reverse=True)[:elite_count]
-
-#         new_arrangements = [copy.deepcopy(elite) for elite in elites]
-
-#         while len(new_arrangements) < POPULATION_SIZE:
-
-#             parent1 = tournament_selection(arrangements)
-#             parent2 = tournament_selection(arrangements)
-#             children = uniform_crossover(parent1, parent2)
-#             for child in children:
-#                 if len(new_arrangements) >= POPULATION_SIZE:
-#                     break
-#                 adaptive_mutation = MUTATION_RATE
-#                 if child.fitness < median_fitness:
-#                     adaptive_mutation *= 1.2
-
-#                 mutated_child = mutate(child, mutation_rate=adaptive_mutation)
-#                 new_arrangements.append(mutated_child)
-#         arrangements = new_arrangements
-
-#     best = max(arrangements, key=lambda p: p.fitness)
-
-#     print("\n=== FINAL RESULT ===")
-#     print(f"Best fitness: {best.fitness}")
-
-#     for chord in best.progression.chords:
-#         print(chord)
-
-# main()

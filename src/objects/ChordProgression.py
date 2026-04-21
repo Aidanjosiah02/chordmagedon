@@ -48,9 +48,9 @@ class ChordProgression:
         fitness = (total_progression_score / num_chords)
 
         # Check song structure
-        # We attempt to group the chord prog to reasonable phrases and average the score
-        fitness += self.get_phrasing_average_score()
-
+        # We attempt to group the chord prog to reasonable segments and average the score
+        fitness += self.get_segment_average_score()
+        
         fitness = fitness / 2
 
         # penalize overly duplication
@@ -63,17 +63,17 @@ class ChordProgression:
         self.fitness = fitness
         return self.fitness
 
-    def get_phrasing_average_score(self):
-        phrase_lengths = [4, 5, 6, 7]
+    def get_segment_average_score(self):
+        segment_lengths = [4, 5, 6, 7]
         scores: list[float] = []
 
-        for length in phrase_lengths:
-            score = self.evaluate_phrase_of_length(length)
+        for length in segment_lengths:
+            score = self.evaluate_segment_of_length(length)
             scores.append(score)
 
         return sum(scores) / len(scores)
 
-    def evaluate_phrase_of_length(self, length: int) -> float:
+    def evaluate_segment_of_length(self, length: int) -> float:
         total_score = 0.0
         transitions = 0
         repetition_penalty = 0.0
@@ -84,11 +84,11 @@ class ChordProgression:
             total_score += RESOLUTION_SCORE_TABLE[(prev_chord, curr_chord)]
             transitions += 1
 
-            phrase_a = self.chords[i - length: i]
-            phrase_b = self.chords[i: i + length]
+            segment_a = self.chords[i - length: i]
+            segment_b = self.chords[i: i + length]
 
-            if len(phrase_a) == len(phrase_b):
-                matches = sum(1 for a, b in zip(phrase_a, phrase_b) if a.quality == b.quality)
+            if len(segment_a) == len(segment_b):
+                matches = sum(1 for a, b in zip(segment_a, segment_b) if a.quality == b.quality)
                 repetition_penalty += (matches / length) * 5.0
 
         if transitions == 0:
